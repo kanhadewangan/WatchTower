@@ -1,8 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { fetchData } from '../controller/fetch.js';
-import 
+import { startMonitoring } from '../controller/timer.js'; 
 dotenv.config();
 import prisma from '../../prisma/prisma.js';
 
@@ -24,36 +23,38 @@ const authenticateToken = (req, res, next) => {
 }
 
 router.post('/add-check', authenticateToken, async (req, res) => {
-    const {websitename,reigon} = req.body;
-    try {
-        const websiteInfo = await prisma.website.findFirst({
-            where:{
-                name: websitename,
-                userId: req.user.userId
-            }
-        })
-        const response = await fetchData(websiteInfo.url);
-        console.log(response);
-        const check =  await prisma.checks.create({
-            data:{
-                website_id: websiteInfo.id,
-                response_time: response.responseTime,
-                status_code: response.statusCode,
-                reigon:reigon,
-                userId: req.user.userId,
-                status : response.isSuccess ? "UP" : "DOWN"
-                
+  const { websitename } = req.body;
 
-            }
-        })  
-        
-        res.status(201).json({ message: 'Check added successfully',data:check });
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Internal server error' });
+  try {
+    const websiteInfo = await prisma.website.findFirst({
+      where: {
+        name: websitename,
+        userId: req.user.userId,
+      },
+    });
+
+    if (!websiteInfo) {
+      return res.status(404).json({ message: "Website not found" });
     }
 
-})
+    // 🔥 Start background monitoring (DO NOT await forever jobs)
+startMonitoring(
+  websiteInfo.id,   // ✅ DB primary key
+  websiteInfo.url,
+  600 // every 10 minutes
+);
+
+    return res.status(201).json({
+      message: "Monitoring started successfully",
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+      
 
 router.get('/checks/:websitename', authenticateToken, async (req, res) => {
     try {

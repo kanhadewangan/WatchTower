@@ -13,15 +13,16 @@ export async function fetchData(url) {
     const end = Date.now();
 
     await client.rPush(
-      "checks:buffer",
-      JSON.stringify({
-        websiteId: url,
-        statusCode: response.status,
-        responseTime: end - start,
-        status: response.status >= 200 && response.status < 400 ? "up" : "down",
-        checkedAt: Date.now(),
-      })
-    );
+  "checks:buffer",
+  JSON.stringify({
+    websiteId,              // ✅ correct FK
+    statusCode: response.status,
+    responseTime: end - start,
+    status: response.status >= 200 && response.status < 400 ? "UP" : "DOWN",
+    checkedAt: Date.now(),
+  })
+);
+
 
     console.log(`Fetched ${url} → ${response.status}`);
 

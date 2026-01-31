@@ -1,15 +1,14 @@
 import { fetchData } from "./fetch.js";
 import client from "./redis.js";
 
- export function startMonitoring(url, interval) {
-  // Run immediately once
-  fetchData(url).then(console.log).catch(console.error);
+ export function startMonitoring(websiteId, url, interval = 600) {
+  fetchData(websiteId, url); // run once
 
-  // Then repeat
   setInterval(() => {
-    fetchData(url).catch(console.error);
+    fetchData(websiteId, url).catch(console.error);
   }, interval);
 }
+
 
 
 // Start monitoring a sample URL every 10 minutes (600,000 ms)
@@ -31,8 +30,4 @@ import client from "./redis.js";
   return allLogs;
 }
 
-fetchAllChecks().then((logs) => {
-  console.log("All fetched logs:", logs);
-}).catch((err) => {
-  console.error("Error fetching all logs:", err);
-});
+
