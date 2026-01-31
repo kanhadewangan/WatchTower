@@ -1,8 +1,8 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { startMonitoring } from '../controller/timer.js'; 
-import {buildHighErrorRateTemplate,buildLowUptimeTemplate,buildWebsiteDownTemplate} from '../service/email.js';
+import { startMonitoring } from '../service/timer.js'; 
+import { queueEmailJob } from '../service/emailQueue.js';
 dotenv.config();
 import prisma from '../../prisma/prisma.js';
 
@@ -49,7 +49,7 @@ startMonitoring(
   600000 // every 10 minutes
 );
 
-    await sendEmail(req.user.email, 'Monitoring Started', `Monitoring has started for website: ${websitename}`);
+await queueEmailJob({ to: req.user.userEmail, subject: 'Monitoring Started', text: `Monitoring has been started for your website: ${websiteInfo.name}` });
 
     return res.status(201).json({
       message: "Monitoring started successfully",

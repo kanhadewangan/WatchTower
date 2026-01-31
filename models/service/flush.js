@@ -1,4 +1,4 @@
- import { fetchAllChecks } from "../controller/timer.js";
+ import { fetchAllChecks } from "./timer.js";
  import prisma from "../../prisma/prisma.js";
  export async function flushLogsToDB()
   {
