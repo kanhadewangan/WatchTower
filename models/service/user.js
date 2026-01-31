@@ -30,16 +30,16 @@ router.post('/register', async (req, res) => {
 
 
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
     try {
         const user = await prisma.users.findFirst({
             where: {
-                username,
+                email,
                 password
             }
         });
         if (user) {
-            const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ userId: user.id,userEmail: user.email }, JWT_SECRET, { expiresIn: '1h' });
             res.json({ message: 'Login successful', token });
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
