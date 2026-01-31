@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model users{
+  id String @id @default(cuid())
+  email String @unique
+  name String?
+  password String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  websites Website[]
+  checks checks[]
+}
+
+
+model Website {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checks    checks[]
+
+  @@index([userId])
+}
+
+enum status{
+  UP
+  DOWN
+}
+enum reigon{
+  US_EAST_1
+  US_WEST_1
+  EU_CENTRAL_1
+  AP_SOUTHEAST_1
+}
+
+model checks{
+  id String @id @default(cuid())
+  website_id String
+  userId String
+  status_code Int
+  response_time Int
+  status status
+  created_at DateTime @default(now())
+  reigon reigon
+  website  Website @relation(fields: [website_id], references: [id], onDelete: Cascade)
+  user users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([website_id])
+}
