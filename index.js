@@ -8,7 +8,7 @@ app.use(express.json());
 app.use('/api/v1/users', user);
 app.use('/api/v1/websites', website);
 app.use('/api/v1/checks', checks);
-setInterval(flushLogsToDB, 10000);
+setInterval(flushLogsToDB, 100);
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000');

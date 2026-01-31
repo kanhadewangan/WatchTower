@@ -75,6 +75,64 @@ router.get('/checks/:websitename', authenticateToken, async (req, res) => {
     }
 })
 
+router.get('/uptime/:websitename', authenticateToken, async (req, res) => {
+    try {
+        const websiteInfo = await prisma.website.findFirst({
+            where:{
+                name: req.params.websitename,
+                userId: req.user.userId
+            }
+        })
+        const totalChecks = await prisma.checks.count({
+            where: {
+                website_id: websiteInfo.id,
+            }
+        });
+        const upChecks = await prisma.checks.count({
+            where: {
+                website_id: websiteInfo.id,
+                status: "UP"
+            }
+        });
+
+        const averageResponseTimeResult = await prisma.checks.aggregate({
+            where: {
+                website_id: websiteInfo.id,
+            },
+            _avg: {
+                response_time: true,
+            },
+        });
+        const errorMetric = (totalChecks - upChecks) * 1;
+
+
+        const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
+        res.json({ uptimePercentage, averageResponseTime: averageResponseTimeResult._avg.response_time || 0 , errorMetric });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+})
+
+
+router.delete('/checks/:websitename', authenticateToken, async (req, res) => {
+    try {
+        const websiteInfo = await prisma.website.findFirst({
+            where:{
+                name: req.params.websitename,
+                userId: req.user.userId
+            }
+        })
+        await prisma.checks.deleteMany({
+            where: {
+                website_id: websiteInfo.id,
+            }
+        });
+        res.json({ message: 'Checks deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+);
 const checks = router;
 
 export default checks;

@@ -1,7 +1,7 @@
 import axios from "axios";
 import client from "./redis.js";
 
-export async function fetchData(url) {
+export async function fetchData(websiteId, url) {
   const start = Date.now();
 
   try {

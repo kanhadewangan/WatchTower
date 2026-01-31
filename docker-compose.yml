@@ -1,19 +1,19 @@
 version: "3.8"
 
 services:
-  database:
-    image: postgres:latest
+  database: # PostgreSQL Database Service
+    image: postgres:16
     container_name: postgres_db
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: mydb
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 
-  cache:
+  cache: # Redis Cache Service
     image: redis:latest
     container_name: redis_cache
     ports:
