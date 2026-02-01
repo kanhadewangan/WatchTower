@@ -111,19 +111,7 @@ router.get('/uptime/:websitename', authenticateToken, async (req, res) => {
             },
         });
 const errorMetric = totalChecks === 0 ? 0 : ((totalChecks - upChecks) / totalChecks) * 100;
-    if (errorMetric > 5) {
-      const emailContent = buildHighErrorRateTemplate(websiteInfo.name, errorMetric);
-      await sendEmail(req.user.email, 'High Error Rate Alert', emailContent);
-    }
-
-    const uptimeThreshold = 90; // Define your uptime threshold percentage
-    let  uptimePercentages = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
-    if (uptimePercentages < uptimeThreshold) {
-      const emailContent = buildLowUptimeTemplate(websiteInfo.name, uptimePercentages);
-      await sendEmail(req.user.email, 'Low Uptime Alert', emailContent);
-    }
-      
-
+ 
         const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
         res.json({ uptimePercentage, averageResponseTime: averageResponseTimeResult._avg.response_time || 0 , errorMetric });
     } catch (error) {
