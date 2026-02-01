@@ -1,7 +1,7 @@
- import { fetchAllChecks } from "./timer.js";
- import prisma from "../../prisma/prisma.js";
- export async function flushLogsToDB()
-  {
+import { fetchAllChecks } from "./timer.js";
+import prisma from "../../prisma/prisma.js";
+
+export async function flushLogsToDB() {
   const logs = await fetchAllChecks();
   if (logs.length === 0) return;
 
@@ -19,14 +19,31 @@
         response_time: log.responseTime,
         status: log.status,
         userId: website?.userId || null,
-        reigon: 'US_EAST_1',
+        reigon: log.reigon || "US_EAST_1",
         created_at: new Date(log.checkedAt),
       };
     })
+    
   );
+  console.log(`🧹 Flushing ${logsWithUserId.length} checks to database`);
 
- await prisma.checks.createMany({
-  data: logsWithUserId.filter(log => log.userId !== null),
-  skipDuplicates: true,
-});
+  if (logsWithUserId.length > 0) {
+    await prisma.checks.createMany({
+      data: logsWithUserId.filter(log => log.userId !== null),
+      skipDuplicates: true,
+    });
+    console.log(`✅ Flushed ${logsWithUserId.length} checks to database`);
   }
+}
+
+export function startFlushInterval() {
+  console.log("🧹 Flush worker started");
+  setInterval(async () => {
+    try {
+        await flushLogsToDB();
+      console.log("🧹 Flush cycle completed");
+    } catch (error) {
+      console.error("Error flushing logs:", error);
+    } 
+  }, 60000); // every 1 minute
+}

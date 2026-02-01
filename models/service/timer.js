@@ -1,33 +1,32 @@
 import { fetchData } from "./fetch.js";
 import client from "./redis.js";
 
- export function startMonitoring(websiteId, url, interval = 600) {
-  fetchData(websiteId, url); // run once
+ export function startMonitoring(websiteId, url, reigon, interval) {
+  fetchData(websiteId, url, reigon); // run once
 
   setInterval(() => {
-    fetchData(websiteId, url).catch(console.error);
-  }, interval);
+    fetchData(websiteId, url, reigon).catch(console.error);
+  }, interval * 1000); // convert seconds to milliseconds
 }
 
 
 
-// Start monitoring a sample URL every 10 minutes (600,000 ms)
- export async function fetchAllChecks() {
+// Fetch all checks from Redis buffer
+export async function fetchAllChecks() {
   const BATCH_SIZE = 100;
   const allLogs = [];
 
   while (true) {
-    const batch = await client.lPop("checks:buffer", BATCH_SIZE);
+    // lPop returns a single item, loop to get multiple
+    const item = await client.lPop("checks:buffer");
 
-    if (!batch) break;
+    if (!item) break;
 
-    // 🔑 normalize to array
-    const items = Array.isArray(batch) ? batch : [batch];
-
-    allLogs.push(...items.map(JSON.parse));
+    allLogs.push(JSON.parse(item));
+    
+    // Stop if we've fetched enough items
+    if (allLogs.length >= BATCH_SIZE) break;
   }
 
   return allLogs;
 }
-
-

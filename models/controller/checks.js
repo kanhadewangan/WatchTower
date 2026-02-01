@@ -28,7 +28,7 @@ const authenticateToken = (req, res, next) => {
 }
 
 router.post('/add-check', authenticateToken, async (req, res) => {
-  const { websitename } = req.body;
+    const { websitename, reigon = "US_EAST_1" } = req.body;
 
   try {
     const websiteInfo = await prisma.website.findFirst({
@@ -43,21 +43,21 @@ router.post('/add-check', authenticateToken, async (req, res) => {
     }
 
     // 🔥 Start background monitoring (DO NOT await forever jobs)
-startMonitoring(
-  websiteInfo.id,   // ✅ DB primary key
-  websiteInfo.url,
-  600000 // every 10 minutes
-);
+        startMonitoring(
+            websiteInfo.id,   // ✅ DB primary key
+            websiteInfo.url,
+            reigon,
+            60 // every 1 minute (seconds)
+        );
 
-await queueEmailJob({ to: req.user.userEmail, subject: 'Monitoring Started', text: `Monitoring has been started for your website: ${websiteInfo.name}` });
-
-    return res.status(201).json({
+        await queueEmailJob({ to: req.user.userEmail, subject: 'Monitoring Started', text: `Monitoring has been started for your website: ${websiteInfo.name}` });
+        return res.status(201).json({
       message: "Monitoring started successfully",
     });
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error",error: error.message});
   }
 });
 
@@ -127,6 +127,7 @@ const errorMetric = totalChecks === 0 ? 0 : ((totalChecks - upChecks) / totalChe
         const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
         res.json({ uptimePercentage, averageResponseTime: averageResponseTimeResult._avg.response_time || 0 , errorMetric });
     } catch (error) {
+        console.log(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 })
