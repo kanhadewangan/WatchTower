@@ -25,15 +25,28 @@ export async function flushLogsToDB() {
     })
     
   );
+  const metrics = logsWithUserId.map(logs =>({
+    status: logs.status,
+    response_time: logs.response_time,
+    website_id: logs.website_id
+  }))
+   const upCount = metrics.filter(m => m.status === "UP").length;
+   const totalCount = metrics.length;
+   const uptimePercentage = totalCount === 0 ? 0 : (upCount / totalCount) * 100;
+   if (uptimePercentage < 90) {
+    
+   }
   console.log(`🧹 Flushing ${logsWithUserId.length} checks to database`);
 
   if (logsWithUserId.length > 0) {
     await prisma.checks.createMany({
       data: logsWithUserId.filter(log => log.userId !== null),
+      
       skipDuplicates: true,
     });
     console.log(`✅ Flushed ${logsWithUserId.length} checks to database`);
   }
+
 }
 
 export function startFlushInterval() {

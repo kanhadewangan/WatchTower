@@ -5,6 +5,7 @@ import { startMonitoring } from '../service/timer.js';
 import { queueEmailJob } from '../service/emailQueue.js';
 dotenv.config();
 import prisma from '../../prisma/prisma.js';
+import transporter from '../service/email.js';
 
 const router = express.Router();
 
@@ -110,9 +111,29 @@ router.get('/uptime/:websitename', authenticateToken, async (req, res) => {
                 response_time: true,
             },
         });
-const errorMetric = totalChecks === 0 ? 0 : ((totalChecks - upChecks) / totalChecks) * 100;
- 
+        const errorMetric = totalChecks === 0 ? 0 : ((totalChecks - upChecks) / totalChecks) * 100;
         const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
+        
+        // Send alert emails if thresholds exceeded
+        if (errorMetric > 5) {
+          await queueEmailJob({
+            to: req.user.userEmail,
+            subject: `🚨 High Error Rate Alert: ${websiteInfo.name}`,
+            text: `High error rate detected for ${websiteInfo.name}: ${errorMetric.toFixed(2)}%`,
+            html: `<h2>🚨 High Error Rate Alert</h2><p><strong>Website:</strong> ${websiteInfo.name}</p><p><strong>Error Rate:</strong> ${errorMetric.toFixed(2)}%</p>`
+          });
+        }
+
+        const uptimeThreshold = 90;
+        if (uptimePercentage < uptimeThreshold) {
+          await queueEmailJob({
+            to: req.user.userEmail,
+            subject: `⚠️ Low Uptime Alert: ${websiteInfo.name}`,
+            text: `Low uptime detected for ${websiteInfo.name}: ${uptimePercentage.toFixed(2)}%`,
+            html: `<h2>⚠️ Low Uptime Alert</h2><p><strong>Website:</strong> ${websiteInfo.name}</p><p><strong>Uptime:</strong> ${uptimePercentage.toFixed(2)}%</p>`
+          });
+        }
+        
         res.json({ uptimePercentage, averageResponseTime: averageResponseTimeResult._avg.response_time || 0 , errorMetric });
     } catch (error) {
         console.log(error);
