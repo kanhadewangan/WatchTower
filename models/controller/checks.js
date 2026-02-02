@@ -47,7 +47,7 @@ router.post('/add-check', authenticateToken, async (req, res) => {
             websiteInfo.id,   // ✅ DB primary key
             websiteInfo.url,
             reigon,
-            60, // every 1 minute (seconds)
+            60000, // every 1 minute (milliseconds)
             req.user.userEmail, // user email for alerts
             websiteInfo.name // website name for alerts
         );
@@ -276,6 +276,30 @@ router.get('/latest-check/:websitename', authenticateToken, async (req, res) => 
 });
 
 
+router.get('/last-1-hour/:websitename', authenticateToken, async (req, res) => {
+    try {
+        const websiteInfo = await prisma.website.findFirst({
+            where:{
+                name: req.params.websitename,
+                userId: req.user.userId
+            }
+        })
+        const since = Date.now() - ( 60 * 60 * 1000); // 1 hour ago
+        const checks = await prisma.checks.findMany({
+            where: {
+                website_id: websiteInfo.id,
+                created_at: { gte: new Date(since) },
+            },
+            orderBy: {
+                created_at: 'asc',
+            },
+        });
+        res.json({ checks });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 
 router.get('/last-24-hours/:websitename', authenticateToken, async (req, res) => {
