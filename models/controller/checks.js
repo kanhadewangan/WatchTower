@@ -246,9 +246,113 @@ router.get('/uptime/:websitename', authenticateToken, async (req, res) => {
         res.json({ uptimePercentage, averageResponseTime: averageResponseTimeResult._avg.response_time || 0 , errorMetric });
     } catch (error) {
         console.log(error);
+        
         res.status(500).json({ message: 'Internal server error' });
     }
 })
+
+
+router.get('/latest-check/:websitename', authenticateToken, async (req, res) => {
+    try {
+        const websiteInfo = await prisma.website.findFirst({
+            where:{
+                name: req.params.websitename,
+                userId: req.user.userId
+            }
+        })
+        const latestCheck = await prisma.checks.findFirst({
+            where: {
+                website_id: websiteInfo.id,
+            },
+            orderBy: {
+                created_at: 'desc',
+            },
+        });
+        res.json({ latestCheck });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+
+
+router.get('/last-24-hours/:websitename', authenticateToken, async (req, res) => {
+    try {
+        const websiteInfo = await prisma.website.findFirst({
+            where:{
+                name: req.params.websitename,
+                userId: req.user.userId
+            }
+        })
+        const since = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+        const checks = await prisma.checks.findMany({
+            where: {
+                website_id: websiteInfo.id,
+                created_at: { gte: new Date(since) },
+            },
+            orderBy: {
+                created_at: 'asc',
+            },
+        });
+        res.json({ checks });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.get('/last-7-days/:websitename', authenticateToken, async (req, res) => {
+    try {
+        const websiteInfo = await prisma.website.findFirst({
+            where:{
+                name: req.params.websitename,
+                userId: req.user.userId
+            }
+        })
+        const since = Date.now() - (7 * 24 * 60 * 60 * 1000); // 7 days ago
+        const checks = await prisma.checks.findMany({
+            where: {
+                website_id: websiteInfo.id,
+                created_at: { gte: new Date(since) },
+            },
+            orderBy: {
+                created_at: 'asc',
+            },
+        });
+        res.json({ checks });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+router.get('/last-30-days/:websitename', authenticateToken, async (req, res) => {
+    try {
+        const websiteInfo = await prisma.website.findFirst({
+            where:{
+                name: req.params.websitename,
+                userId: req.user.userId
+            }
+        })
+        const since = Date.now() - (30 * 24 * 60 * 60 * 1000); // 30 days ago
+        const checks = await prisma.checks.findMany({
+            where: {
+                website_id: websiteInfo.id,
+                created_at: { gte: new Date(since) },
+            },
+            orderBy: {
+                created_at: 'asc',
+            },
+        });
+        res.json({ checks });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 
 router.delete('/checks/:websitename', authenticateToken, async (req, res) => {

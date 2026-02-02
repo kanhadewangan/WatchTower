@@ -15,6 +15,10 @@ export function startMonitoring(websiteId, url, reigon, interval, userEmail, web
   setInterval(async () => {
     await checkAndSendAlerts(websiteId, userEmail, websiteName);
   }, 5 * 60 * 1000); // 5 minutes
+  // Remove old logs daily
+  setInterval(async () => {
+    await RemoveoldLogs();
+  }, 24 * 60 * 60 * 1000); // 24 hours
 }
 
 async function checkAndSendAlerts(websiteId, userEmail, websiteName) {
@@ -202,6 +206,16 @@ async function checkAndSendAlerts(websiteId, userEmail, websiteName) {
   }
 }
 
+
+async function RemoveoldLogs() {  
+  const THIRTY_DAYS_AGO = Date.now() - (30 * 24 * 60 * 60 * 1000);
+  await prisma.checks.deleteMany({
+    where: {
+      checked_at: { lt: THIRTY_DAYS_AGO }
+    }
+  });
+  
+}
 
 
 // Fetch all checks from Redis buffer
