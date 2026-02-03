@@ -11,6 +11,10 @@ app.use('/api/v1/users', user);
 app.use('/api/v1/websites', website);
 app.use('/api/v1/checks', checks);
 
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the Health Monitoring API');
+});
 // Start the flush worker to persist checks to database
 startFlushInterval();
 
