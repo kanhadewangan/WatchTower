@@ -2,13 +2,17 @@ import { fetchData } from "./fetch.js";
 import client from "./redis.js";
 import { queueEmailJob } from "./emailQueue.js";
 import prisma from "../../prisma/prisma.js";
+import dotenv from 'dotenv'
+dotenv.config({
+  path:'.env'
+})
 
 export function startMonitoring(websiteId, url, reigon, interval, userEmail, websiteName) {
   fetchData(websiteId, url, reigon); // run once
 
   setInterval(() => {
     fetchData(websiteId, url, reigon).catch(console.error);
-  }, interval * 1000);
+  }, interval);
   // convert seconds to milliseconds
   
   // Check alerts every 5 minutes
@@ -236,4 +240,11 @@ export async function fetchAllChecks() {
   }
 
   return allLogs;
+}
+
+if (process.env.NODE_ENV !== "test") {
+  setInterval(async () => {
+    await flushLogsToDB();
+    console.log("🧹 Flush cycle completed");
+  }, 60000);
 }
