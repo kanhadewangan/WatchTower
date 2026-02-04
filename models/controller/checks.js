@@ -5,7 +5,7 @@ import { startMonitoring } from '../service/timer.js';
 import { queueEmailJob } from '../service/emailQueue.js';
 dotenv.config();
 import prisma from '../../prisma/prisma.js';
-
+import  authenticateToken  from '../auth/auth.js';
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET
@@ -14,18 +14,7 @@ const JWT_SECRET = process.env.JWT_SECRET
 
 
 // Middleware to authenticate user using JWT
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  if(!authHeader) return res.sendStatus(401);
-  const token = authHeader.replace('Bearer ', '');
-  if (!token) return res.sendStatus(401);
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-}
 
 router.post('/add-check', authenticateToken, async (req, res) => {
     const { websitename, reigon = "US_EAST_1" } = req.body;
