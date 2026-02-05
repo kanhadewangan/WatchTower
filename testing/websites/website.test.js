@@ -15,6 +15,16 @@ jest.unstable_mockModule('../../prisma/prisma.js', () => ({
     },
   },
 }));
+jest.unstable_mockModule('../../models/auth/auth.js', () => ({
+  __esModule: true,
+  default: (req, res, next) => {
+    req.user = { 
+      userId: 'cml7w7vb90001rofgkcbf8a46',
+      userEmail: 'test@example.com'
+    };
+    next();
+  },
+}));
 
 
 // 2️⃣ Import the mocked prisma and app
