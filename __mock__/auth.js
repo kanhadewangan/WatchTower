@@ -5,7 +5,10 @@ import { jest } from "@jest/globals";
 jest.unstable_mockModule("../../auth/auth.js", () => ({
   __esModule: true,
   default: (req, res, next) => {
-    req.user = { userId: 1 }; // fake logged-in user
+    req.user = { 
+      userId: 'cml7w7vb90001rofgkcbf8a46',
+      userEmail: 'test@example.com'
+    }; // fake logged-in user
     next();
   },
 }));

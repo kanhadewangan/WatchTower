@@ -16,7 +16,20 @@ jest.unstable_mockModule('../../prisma/prisma.js', () => ({
       findMany: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
+      aggregate: jest.fn(),
     },
+  },
+}));
+
+jest.unstable_mockModule('../../models/auth/auth.js', () => ({
+  __esModule: true,
+  default: (req, res, next) => {
+    req.user = { 
+      userId: 'cml7w7vb90001rofgkcbf8a46',
+      userEmail: 'test@example.com'
+    };
+    next();
   },
 }));
 
@@ -34,8 +47,6 @@ describe('Checks API Endpoints', () => {
  
     it('should create a new check', async () => {
         prisma.website.findFirst.mockResolvedValue({
-            id: 'website123',
-            url: 'https://example.com',
             name: 'Example Site',
             userId: 'cml7w7vb90001rofgkcbf8a46',
         });
@@ -81,13 +92,13 @@ describe('Checks API Endpoints', () => {
         ]);
 
         const res = await request(app)
-            .get('/api/v1/checks/website/1')
+            .get('/api/v1/checks/checks/Example')
             .set('Authorization', `Bearer ${token}`);
 
         expect(res.statusCode).toBe(200);
         expect(prisma.checks.findMany).toHaveBeenCalledWith({
             where: {
-                websiteId: 1,
+                website_id: 1,
             },
         });
     })
@@ -106,7 +117,7 @@ describe('Checks API Endpoints', () => {
             reigon:"US_EAST_1",
         })
         const res = await request(app)
-        .get('/api/v1/checks/check/Example')
+        .get('/api/v1/checks/checks/Example')
         .set('authorization', `Bearer ${token}`);
         expect(res.statusCode).toBe(200);
         // expect(prisma.checks.findFirst).toHaveBeenCalledWith({
@@ -141,6 +152,12 @@ describe('Checks API Endpoints', () => {
                 reigon:"US_WEST_1",
             }
         ]);
+        prisma.checks.count.mockResolvedValueOnce(2).mockResolvedValueOnce(1);
+        prisma.checks.aggregate.mockResolvedValue({
+            _avg: {
+                response_time: 100,
+            },
+        });
         const res = await request(app)
         .get('/api/v1/checks/uptime/Example')
         .set('Authorization', `Bearer ${token}`);
