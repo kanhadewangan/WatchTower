@@ -12,6 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET
 
 router.post('/register', async (req, res) => {
     const { email, password,name } = req.body;
+    console.log(email,password,name)
     try {
         const users = await prisma.users.create({
             data:{
@@ -39,12 +40,14 @@ router.post('/login', async (req, res) => {
             }
         });
         if (user) {
-            const token = jwt.sign({ userId: user.id,userEmail: user.email }, JWT_SECRET, { expiresIn: '1h' });
-            res.json({ message: 'Login successful', token });
+            const token = jwt.sign({ userId: user.id,userEmail: user.email }, JWT_SECRET, { expiresIn: '1d' });
+            res.json({ message: 'Login successful', "token":token });
         } else {
+            
             res.status(401).json({ message: 'Invalid credentials' });
         }
     } catch (error) {
+        console.log(error)
         res.status(500).json({ message: 'Internal server error' });
     }
 })

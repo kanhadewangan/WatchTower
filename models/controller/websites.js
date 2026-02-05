@@ -1,27 +1,17 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 dotenv.config();
 import prisma from '../../prisma/prisma.js';
 
-
+import websiteAuth from '../auth/auth.js';
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET
 
 // Middleware to authenticate user using JWT
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader.replace('Bearer ', '');
-  if (!token) return res.sendStatus(401);
+const authenticateToken = websiteAuth;
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-}
 
 router.post('/add-website', authenticateToken, async (req, res) => {
     const {url,name} = req.body;
