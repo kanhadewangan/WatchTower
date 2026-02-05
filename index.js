@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import user from './models/controller/user.js';
 import website from './models/controller/websites.js';
 import checks from './models/controller/checks.js';
@@ -6,6 +7,13 @@ import { startFlushInterval } from './models/service/flush.js';
 import './models/service/emailWorker.js'; // Start email worker
 
 const app = express();
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
+}));
+
 app.use(express.json());
 app.use('/api/v1/users', user);
 app.use('/api/v1/websites', website);

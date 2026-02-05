@@ -1,7 +1,7 @@
 import axios from "axios";
 import client from "./redis.js";
 
-export async function fetchData(websiteId, url, region) {
+export async function fetchData(websiteId, url, reigon) {
   const start = Date.now();
 
   try {
@@ -20,7 +20,7 @@ export async function fetchData(websiteId, url, region) {
       responseTime,
       status: isUp ? "UP" : "DOWN",
       checkedAt: Date.now(),
-      reigon: region || "US_EAST_1",
+      reigon: reigon || "US_EAST_1",
     };
 
     await client.rPush(
@@ -36,7 +36,7 @@ export async function fetchData(websiteId, url, region) {
     };
   } catch (error) {
     const responseTime = Date.now() - start;
-    console.log(`❌ Failed to fetch ${url} from region ${region}: ${error.message}`);
+    console.log(`❌ Failed to fetch ${url} from region ${reigon}: ${error.message}`);
 
     const checkData = {
       websiteId,
@@ -44,7 +44,7 @@ export async function fetchData(websiteId, url, region) {
       responseTime,
       status: "DOWN",
       checkedAt: Date.now(),
-      reigon: region || "US_EAST_1",
+      reigon: reigon || "US_EAST_1",
     };
 
     await client.rPush(

@@ -76,12 +76,12 @@ router.get('/website/:id', authenticateToken,  async (req, res) => {
     }
 })
 
-router.delete('/delete-website/:id', authenticateToken, async (req, res) => {
-    const {id} = req.params;
+router.delete('/delete-website/:name', authenticateToken, async (req, res) => {
+    const {name} = req.params;
     try {
 
         await prisma.website.delete({
-            where: { id: parseInt(id) }
+            where: { name: name }
         });
         res.json({ message: 'Website deleted successfully' });
     } catch (error) {
