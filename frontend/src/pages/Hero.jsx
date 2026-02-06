@@ -1,6 +1,13 @@
-import React from "react";
 import Nav from "./Nav";
+import Footer from "./Footer";
+import { useNavigate } from "react-router-dom";
 const Hero = () => {
+  const navigate = useNavigate();
+  if(!localStorage.getItem("token")){
+    return navigate("/login")
+  }
+  
+ 
   return (
     <div className="w-screen h-full"  >
     <div className="h-full w-screen  " style={{
@@ -18,7 +25,11 @@ const Hero = () => {
           alerts before your users notice a problem.
         </p>
         <div className=" flex justify-center items-center gap-6">
-          <button className="px-3 py-2 bg-green-500 rounded-xl text-white">
+          <button 
+          onClick={()=>{
+            navigate('/signup')
+          }}
+          className="px-3 py-2 bg-green-500 rounded-xl text-white">
             Get Started
           </button>
           <button className="px-3 py-2 bg-green-300 rounded-xl">
@@ -44,7 +55,7 @@ const Hero = () => {
               <h3 className="mb-2 text-xl font-semibold" > Never miss a critical issue</h3>
               <p>Track uptime, response time, and errors continuously. Get notified the moment something goes wrong — before your users notice.</p>
             </div>
-            <div className="bg-white rounded-2xl shadow-md p-6 shadow-md">
+            <div className="bg-white rounded-2xl shadow-md p-6 ">
               <h2 className="text-xl font-semibold mb-4">Instant Alerts</h2>
               <h3 className="mb-2 text-xl font-semibold">Know instantly, act faster</h3>
               <p>Receive alerts via email (and more coming soon) when your site goes down or performance degrades.</p>
@@ -62,21 +73,43 @@ const Hero = () => {
                 <div className="bg-white rounded-2xl shadow-md p-6 m-4">
                     <h2 className="text-xl font-semibold mb-4">Free</h2>
                     <p className="text-2xl font-bold mb-4">$0</p>
-                    <p>Monitor 1 website with basic uptime checks and email alerts.</p>
+                    <ul>
+                      <li>Monitor 1 website</li>
+                      <li>Basic uptime checks</li>
+                      <li>Email alerts</li>
+                    </ul>
+                        <button 
+                        onClick={()=>
+                        {
+                          navigate("/login")
+                        }
+                        }
+                         className=" px-2 py-1 mt-4 bg-green-500 rounded-xl text-white">Start Free Trial</button>
+
                 </div>
                 <div className="bg-white rounded-2xl shadow-md p-6 m-4 ">
                     <h2 className="text-xl font-semibold mb-4">Pro</h2>
                     <p className="text-2xl font-bold mb-4">$9/month</p>
-                    <p>Monitor up to 5 websites with advanced checks, instant alerts, and detailed logs.</p>
+                    <ul>
+                      <li>Monitor up to 5 websites</li>
+                      <li>Advanced checks, instant alerts, and detailed logs</li>
+                    </ul>
+                        <button onClick={()=>                        {
+                          navigate("/signup")
+                        }
+                        } className=" px-2 py-1 mt-4 bg-green-500 rounded-xl text-white">Start Your Pro Trial</button>
                 </div>
                 <div className="bg-white rounded-2xl shadow-md p-6 m-4">
                     <h2 className="text-xl font-semibold mb-4">Enterprise</h2>
-                    <p className="text-2xl font-bold mb-4">Contact Us</p>
-                    <p>Custom solutions for large businesses with high monitoring needs and dedicated support.</p>
+                    <p className="text-2xl font-bold mb-4"> $20/month</p>
+                    <ul>
+                      <li>Custom solutions for large businesses with high monitoring needs and dedicated support.</li>
+                    </ul>
+                        <button className=" px-2 py-1 mt-4 bg-green-500 rounded-xl text-white">Contact Sales</button>
                 </div>
-
               </div>
           </div>
+          <Footer />
         </div>
       </div>
     </div>

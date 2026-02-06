@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+
 const Nav = () => {
+  const navigator = useNavigate()
   return (
     <div className=' max-w-4xl mx-auto px-5 pt-8'>
         <div className='  w-full  flex justify-between items-center pt-4 bg-white shadow-md rounded-2xl px-4 py-2'>
@@ -9,7 +12,9 @@ const Nav = () => {
             <a href='/features' className=' text-center text-md '>Features</a>
             <a href='/pricing' className=' text-center text-md '>Pricing</a>
             <a href='/contact' className=' text-center text-md '>Contact</a>
-                <button className=' p-1 bg-green-500 text-white rounded-xl'>Start Free Trial</button>
+                <button onClick={()=>{
+                  navigator('/login')
+                }} className=' p-1 bg-green-500 text-white rounded-xl'>Start Free Trial</button>
         </div>
 
 </div>
