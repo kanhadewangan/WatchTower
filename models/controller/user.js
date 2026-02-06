@@ -29,6 +29,35 @@ router.post('/register', async (req, res) => {
     }
 })
 
+router.get('/profile', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ message: 'Authorization header missing' });
+    }
+    const token = authHeader.replace('Bearer ', '');
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await prisma.users.findUnique({
+            where: {
+                id: decoded.userId
+            },
+            select:{
+                id:true,
+                email:true,
+                name:true
+            }
+        });
+        if (user) {
+            res.json({ user });
+            console.log(user)
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(401).json({ message: 'Invalid token' });
+    }
+})
 
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
