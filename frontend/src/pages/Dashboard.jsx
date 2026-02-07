@@ -6,14 +6,21 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [user, setUser] = useState(null);
-  const [monitors, setMonitors] = useState([]); // Must be []
+  const [websites, setWebsites] = useState([]); // Must be []
   const [loading, setLoading] = useState(true);
+ 
 
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false);
   const [newMonitor, setNewMonitor] = useState({ name: "", url: "" });
   const [addingMonitor, setAddingMonitor] = useState(false);
   const [addError, setAddError] = useState("");
+  const [metrics ,setMetrics] = useState({
+    totalChecks: 0,
+    avgResponseTime: 0,
+    down: 0,
+    up:0
+  })
 
   // Check auth and redirect if no token
   useEffect(() => {
@@ -48,6 +55,7 @@ const Dashboard = () => {
 
     if (localStorage.getItem("token")) {
       fetchUser();
+      
     }
   }, [navigate]);
 
@@ -64,18 +72,42 @@ const Dashboard = () => {
           }
         );
         // Ensure we always set an array
-        const data = response.data?.data;
-        setMonitors(Array.isArray(data) ? data : []);
+        const data = response.data.websites || [];
+        console.log("Fetched websites:", data);
+        setWebsites(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch websites:", error);
-        setMonitors([]); // Set empty array on error
+        setWebsites([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
     };
 
+    const fetchAllMetrics = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_URL}/api/v1/checks/all-metrics`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        console.log("Fetched metrics:", response.data);
+        setMetrics({
+          totalChecks: response.data.totalChecks || 0,
+          avgResponseTime: response.data.avgResponseTime || 0,
+          down: response.data.down || 0,
+          up: response.data.up || 0
+        });
+      } catch (error) {
+        console.error("Failed to fetch metrics:", error);
+      }
+    };
+
     if (localStorage.getItem("token")) {
       fetchWebsites();
+      fetchAllMetrics();
     } else {
       setLoading(false);
     }
@@ -113,9 +145,9 @@ const Dashboard = () => {
           },
         }
       );
-
+   
       // Safe spread - ensure prev is an array
-      setMonitors((prev) => [...(Array.isArray(prev) ? prev : []), response.data.data]);
+      setWebsites((prev) => [...(Array.isArray(prev) ? prev : []), response.data.data]);
 
       // Reset form and close modal
       setNewMonitor({ name: "", url: "" });
@@ -139,12 +171,12 @@ const Dashboard = () => {
     );
   }
 
-  // Mock stats data - use optional chaining or default value
+  // Real stats data from API
   const stats = [
     {
       title: "Total Monitors",
-      value: (monitors?.length || 0).toString(),
-      change: "+12%",
+      value: (websites?.length || 0).toString(),
+      change: "",
       changeType: "positive",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,9 +186,9 @@ const Dashboard = () => {
     },
     {
       title: "Uptime",
-      value: "99.9%",
-      change: "+0.1%",
-      changeType: "positive",
+      value: `${metrics.up.toFixed(1)}%`,
+      change: metrics.up >= 99 ? "Excellent" : metrics.up >= 95 ? "Good" : "Needs attention",
+      changeType: metrics.up >= 95 ? "positive" : "negative",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -165,9 +197,9 @@ const Dashboard = () => {
     },
     {
       title: "Incidents",
-      value: "3",
-      change: "-25%",
-      changeType: "positive",
+      value: metrics.down.toString(),
+      change: metrics.down === 0 ? "No incidents" : `${metrics.down} down`,
+      changeType: metrics.down === 0 ? "positive" : "negative",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -176,9 +208,9 @@ const Dashboard = () => {
     },
     {
       title: "Response Time",
-      value: "145ms",
-      change: "-12ms",
-      changeType: "positive",
+      value: `${Math.round(metrics.avgResponseTime)}ms`,
+      change: metrics.avgResponseTime < 200 ? "Fast" : metrics.avgResponseTime < 500 ? "Normal" : "Slow",
+      changeType: metrics.avgResponseTime < 500 ? "positive" : "negative",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -205,7 +237,9 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex">
+    <div className="min-h-screen flex" style={{
+      background: "linear-gradient(135deg, #F8FAFC 0%, #DBE6E1 50%, #E6FFFA 100%)",
+    }}>
       {/* Sidebar */}
       <aside
         className={`${
@@ -350,63 +384,27 @@ const Dashboard = () => {
                   View All
                 </a>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-[#F8FAFC]">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wider">
-                        Uptime
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wider">
-                        Response
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#DBE6E1]">
-                    {monitors && monitors.length > 0 ? (
-                      monitors.map((monitor) => (
-                        <tr key={monitor.id} className="hover:bg-[#F8FAFC] transition">
-                          <td className="px-6 py-4">
-                            <div>
-                              <p className="font-medium text-[#334155]">{monitor.name}</p>
-                              <p className="text-sm text-[#94A3B8]">{monitor.url}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                                monitor.status === "up"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-red-100 text-red-700"
-                              }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  monitor.status === "up" ? "bg-green-500" : "bg-red-500"
-                                }`}
-                              ></span>
-                              {monitor.status === "up" ? "Operational" : "Down"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[#334155]">{monitor.uptime}</td>
-                          <td className="px-6 py-4 text-sm text-[#334155]">{monitor.responseTime}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="px-6 py-8 text-center text-[#94A3B8]">
-                          No monitors found. Add your first monitor!
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              <div className="divide-y divide-[#DBE6E1]">
+                {websites.map((website) => (
+                  <div key={website.id} className="px-6 py-4 flex items-center justify-between hover:bg-[#F8FAFC] transition">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div>
+                        <div className="font-medium text-[#1E293B]">{website.name}</div>
+                        <div className="text-sm text-[#64748B] truncate max-w-xs">{website.url}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-green-600 font-medium">Online</span>
+                      <button
+                        onClick={() => navigate(`/monitor/${website.name}`)}
+                        className="text-[#319795] hover:text-[#2C7A7B] text-sm font-medium"
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
