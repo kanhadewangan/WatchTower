@@ -1,11 +1,16 @@
 import Nav from "./Nav";
 import Footer from "./Footer";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 const Hero = () => {
+
   const navigate = useNavigate();
+  useEffect(()=>{
   if(!localStorage.getItem("token")){
-    return navigate("/login")
+    return navigate("/")
   }
+  },[])
+
   
  
   return (

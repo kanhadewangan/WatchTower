@@ -391,12 +391,12 @@ const MonitoringDashboard = () => {
 
         {/* Charts Section */}
         {checks.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 mb-8">
             {/* Response Time Chart */}
-            <div className="bg-white rounded-xl border border-[#DBE6E1] p-6">
-              <h3 className="text-xl font-semibold text-[#1E293B] mb-4">Response Time Trend</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
+            <div className="bg-white rounded-xl border border-[#DBE6E1] p-4 sm:p-6 min-w-0">
+              <h3 className="text-lg sm:text-xl font-semibold text-[#1E293B] mb-4">Response Time Trend</h3>
+              <div className="w-full" style={{ minWidth: 0, minHeight: 200 }}>
+                <ResponsiveContainer width="100%" height={250}>
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="responseTimeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -407,13 +407,15 @@ const MonitoringDashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                     <XAxis 
                       dataKey="time" 
-                      tick={{ fontSize: 12, fill: '#64748B' }}
+                      tick={{ fontSize: 11, fill: '#64748B' }}
                       tickLine={{ stroke: '#E2E8F0' }}
+                      interval="preserveStartEnd"
                     />
                     <YAxis 
-                      tick={{ fontSize: 12, fill: '#64748B' }}
+                      tick={{ fontSize: 11, fill: '#64748B' }}
                       tickLine={{ stroke: '#E2E8F0' }}
-                      label={{ value: 'ms', angle: -90, position: 'insideLeft', fill: '#64748B' }}
+                      label={{ value: 'ms', angle: -90, position: 'insideLeft', fill: '#64748B', fontSize: 12 }}
+                      width={45}
                     />
                     <Tooltip content={<ResponseTimeTooltip />} />
                     <Area 
@@ -429,23 +431,25 @@ const MonitoringDashboard = () => {
             </div>
 
             {/* Uptime Status Chart */}
-            <div className="bg-white rounded-xl border border-[#DBE6E1] p-6">
-              <h3 className="text-xl font-semibold text-[#1E293B] mb-4">Uptime Status</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
+            <div className="bg-white rounded-xl border border-[#DBE6E1] p-4 sm:p-6 min-w-0">
+              <h3 className="text-lg sm:text-xl font-semibold text-[#1E293B] mb-4">Uptime Status</h3>
+              <div className="w-full" style={{ minWidth: 0, minHeight: 200 }}>
+                <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                     <XAxis 
                       dataKey="time" 
-                      tick={{ fontSize: 12, fill: '#64748B' }}
+                      tick={{ fontSize: 11, fill: '#64748B' }}
                       tickLine={{ stroke: '#E2E8F0' }}
+                      interval="preserveStartEnd"
                     />
                     <YAxis 
-                      tick={{ fontSize: 12, fill: '#64748B' }}
+                      tick={{ fontSize: 11, fill: '#64748B' }}
                       tickLine={{ stroke: '#E2E8F0' }}
                       domain={[0, 1]}
                       ticks={[0, 1]}
                       tickFormatter={(value) => value === 1 ? 'UP' : 'DOWN'}
+                      width={45}
                     />
                     <Tooltip content={<StatusTooltip />} />
                     <Bar 

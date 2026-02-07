@@ -23,6 +23,10 @@ app.use('/api/v1/checks', checks);
 app.get('/', (req, res) => {
   res.send('Welcome to the Health Monitoring API');
 });
+
+app.get('/api/v1/status', (req, res) => {
+  res.json({ status: 'API is running' });
+});
 // Start the flush worker to persist checks to database
 startFlushInterval();
 

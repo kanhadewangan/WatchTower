@@ -5,13 +5,14 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import MonitoringDashboard from './pages/MonitoringDashboard';
 import Monitoring from './pages/Monitoring';
+import Hero from './pages/Hero';
 
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Hero/>} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />

@@ -15,6 +15,7 @@ export const Monitoring = () => {
     if (!token) {
       navigate("/login");
       return;
+      
     }
     fetchWebsites();
   }, [navigate]);
