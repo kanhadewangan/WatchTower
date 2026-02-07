@@ -264,6 +264,40 @@ router.get('/latest-check/:websitename', authenticateToken, async (req, res) => 
     }
 });
 
+router.get('/all-metrics', authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+
+  try {
+    const [upCount, downCount, totalChecks, avgResponse] = await Promise.all([
+      prisma.checks.count({
+        where: { userId, status: 'UP' }
+      }),
+      prisma.checks.count({
+        where: { userId, status: 'DOWN' }
+      }),
+      prisma.checks.count({
+        where: { userId }
+      }),
+      prisma.checks.aggregate({
+        where: { userId },
+        _avg: {
+          response_time: true
+        }
+      })
+    ]);
+
+    res.json({
+      totalChecks,
+      up: upCount,
+      down: downCount,
+      avgResponseTime: Math.round(avgResponse._avg.response_time || 0)
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 
 router.get('/last-1-hour/:websitename', authenticateToken, async (req, res) => {
     try {
