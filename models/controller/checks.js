@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import { startMonitoring } from '../service/timer.js'; 
 import { queueEmailJob } from '../service/emailQueue.js';
 dotenv.config();
-import prisma from '../../prisma/prisma.js';
+import {prisma} from '../../prisma/prisma.js';
 import  authenticateToken  from '../auth/auth.js';
 const router = express.Router();
 
