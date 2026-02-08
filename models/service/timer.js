@@ -1,7 +1,7 @@
 import { fetchData } from "./fetch.js";
 import client from "./redis.js";
 import { queueEmailJob } from "./emailQueue.js";
-import prisma from "../../prisma/prisma.js";
+import {prisma} from "../../prisma/prisma.js";
 import dotenv from 'dotenv'
 import { flushLogsToDB } from "./flush.js";
 dotenv.config({

@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 dotenv.config();
-import prisma from '../../prisma/prisma.js';
+import {prisma} from '../../prisma/prisma.js';
 
 
 const router = express.Router();
