@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config({
-    path: ".env"
+    path: "/home/kanha/WatchTower/.env"
 });
 
  import { PrismaClient } from "../generated/prisma/client.ts";
@@ -14,15 +14,11 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter })
 export default prisma
 
- async function userData(){
-const res =  await prisma.users.create({
-    data:{
-      email:"kanha",
-      password:"dewangan",
-      name:"kanha"
-    }
-  })
-  console.log(res);
 
-}
+
+
+ 
+
+
+
 

@@ -1,3 +1,9 @@
+import dotenv from 'dotenv';
+dotenv.config({
+  path:'/home/kanha/WatchTower/.env'
+  
+});
+
 import express from 'express';
 import cors from 'cors';
 import user from './models/controller/user.js';
@@ -8,6 +14,9 @@ import './models/service/emailWorker.js'; // Start email worker
 
 const app = express();
 
+console.log('Environment Variables:');
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+console.log('Redis_URL:', process.env.Redis_URL);
 // CORS configuration
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
