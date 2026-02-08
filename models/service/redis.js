@@ -1,8 +1,9 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import { createClient } from 'redis';
 
 const client = createClient({
-  host:'localhost',
-  port: 6379,
+   url:process.env.Redis_URL
 });
 
 client.on('connect', () => {
