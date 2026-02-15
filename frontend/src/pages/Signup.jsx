@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -15,6 +15,7 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -58,7 +59,7 @@ const Signup = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_URL}/api/v1/users/register`,
@@ -68,21 +69,14 @@ const Signup = () => {
           password: formData.password,
         }
       );
-      console.log("Signup successful:", response);
-      
-      // Navigate to login with success message
-      navigate("/login", { 
-        state: { 
+      setIsSuccess(true);
+      navigate("/login", {
+        state: {
           message: "Registration successful! Please sign in.",
-          type: "success" 
-        } 
+          type: "success",
+        },
       });
-      
     } catch (error) {
-      console.error(
-        "Signup failed:",
-        error.response ? error.response.data : error.message
-      );
       setErrors({
         api: error.response?.data?.message || "Registration failed. Please try again.",
       });
@@ -113,28 +107,35 @@ const Signup = () => {
           <p className="text-[#64748B]">Create your account to get started</p>
         </div>
 
+        {/* Error Message */}
+        {errors.api && (
+          <div className="mb-4 text-center text-red-600 font-medium">
+            {errors.api}
+          </div>
+        )}
+
         {/* Signup Form */}
         <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-[#DBE6E1]">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Full Name Field */}
             <div>
               <label
-                htmlFor="fullName"
+                htmlFor="name"
                 className="block text-sm font-medium text-[#334155] mb-2"
               >
                 Full Name
               </label>
               <input
-                id="fullName"
-                name="fullName"
+                id="name"
+                name="name"
                 type="text"
-                value={formData.fullName}
+                value={formData.name}
                 onChange={handleChange}
-                className={inputClasses(errors.fullName)}
+                className={inputClasses(errors.name)}
                 placeholder="Enter your full name"
               />
-              {errors.fullName && (
-                <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-500">{errors.name}</p>
               )}
             </div>
 
@@ -184,6 +185,7 @@ const Signup = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#319795] transition"
                 >
                   {showPassword ? (
+                    // ...eye-off SVG
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -198,6 +200,7 @@ const Signup = () => {
                       />
                     </svg>
                   ) : (
+                    // ...eye SVG
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -249,6 +252,7 @@ const Signup = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#319795] transition"
                 >
                   {showConfirmPassword ? (
+                    // ...eye-off SVG
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -263,6 +267,7 @@ const Signup = () => {
                       />
                     </svg>
                   ) : (
+                    // ...eye SVG
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -330,9 +335,6 @@ const Signup = () => {
             <button
               type="submit"
               disabled={isLoading}
-              onClick={()=>{
-                 navigate("/login")
-              }}
               className="w-full py-3 px-4 bg-[#319795] hover:bg-[#2C7A7B] disabled:bg-[#319795]/50 text-white font-semibold rounded-lg shadow-lg hover:shadow-[#319795]/25 transition duration-200 flex items-center justify-center"
             >
               {isLoading ? (
