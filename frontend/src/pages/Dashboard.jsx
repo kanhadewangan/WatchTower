@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -158,53 +159,74 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="animate-spin h-10 w-10 border-4 border-[#319795] border-t-transparent rounded-full"></div>
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
+            <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+          <p className="text-amber-500 HeadingFont uppercase tracking-widest text-xs animate-pulse">Establishing Connection...</p>
+        </div>
       </div>
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   const stats = [
     {
-      title: "Total Monitors",
+      title: "Active Monitors",
       value: (websites?.length || 0).toString(),
-      change: "",
+      change: "DEPLOYED",
       changeType: "positive",
       icon: (
-        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       ),
     },
     {
-      title: "Uptime",
+      title: "Global Uptime",
       value: `${metrics.up.toFixed(1)}%`,
-      change: metrics.up >= 99 ? "Excellent" : metrics.up >= 95 ? "Good" : "Needs attention",
+      change: metrics.up >= 95 ? "STABLE" : "UNSTABLE",
       changeType: metrics.up >= 95 ? "positive" : "negative",
       icon: (
-        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
       ),
     },
     {
-      title: "Incidents",
+      title: "Total Incidents",
       value: metrics.down.toString(),
-      change: metrics.down === 0 ? "No incidents" : `${metrics.down} down`,
+      change: metrics.down === 0 ? "SECURE" : "BREACH DETECTED",
       changeType: metrics.down === 0 ? "positive" : "negative",
       icon: (
-        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       ),
     },
     {
-      title: "Response Time",
+      title: "Signal Latency",
       value: `${Math.round(metrics.avgResponseTime)}ms`,
-      change: metrics.avgResponseTime < 200 ? "Fast" : metrics.avgResponseTime < 500 ? "Normal" : "Slow",
+      change: metrics.avgResponseTime < 500 ? "OPTIMAL" : "LAG DETECTED",
       changeType: metrics.avgResponseTime < 500 ? "positive" : "negative",
       icon: (
-        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
@@ -212,78 +234,96 @@ const Dashboard = () => {
   ];
 
   const recentActivity = [
-    { id: 1, type: "incident", message: "Auth Service went down", time: "5 min ago", status: "critical" },
-    { id: 2, type: "resolved", message: "API Server incident resolved", time: "1 hour ago", status: "success" },
-    { id: 3, type: "monitor", message: "New monitor added: CDN", time: "3 hours ago", status: "info" },
-    { id: 4, type: "alert", message: "High response time on Web App", time: "5 hours ago", status: "warning" },
+    { id: 1, type: "incident", message: "Auth Service link dropped", time: "5m ago", status: "critical" },
+    { id: 2, type: "resolved", message: "API Sector-7 re-established", time: "1h ago", status: "success" },
+    { id: 3, type: "monitor", message: "New node deployed: Edge-CDN", time: "3h ago", status: "info" },
+    { id: 4, type: "alert", message: "High latency on Primary-DB", time: "5h ago", status: "warning" },
   ];
 
   const navItems = [
-    { name: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6", path: "/dashboard" },
-    { name: "Monitors", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z", path: "/monitor" },
-    { name: "Incidents", icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z", path: "/incidents" },
-    { name: "Status Pages", icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z", path: "/status-pages" },
-    { name: "Team", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z", path: "/team" },
-    { name: "Settings", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z", path: "/settings" },
+    { name: "Command Center", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6", path: "/dashboard" },
+    { name: "Surveillance", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z", path: "/monitor" },
+    { name: "Incident Log", icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z", path: "/incidents" },
+    { name: "Public Comms", icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z", path: "/status-pages" },
+    { name: "Task Force", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z", path: "/team" },
+    { name: "Encryption", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z", path: "/settings" },
   ];
 
   return (
-    <div
-      className="min-h-screen flex relative"
-      style={{
-        background: "linear-gradient(135deg, #F8FAFC 0%, #DBE6E1 50%, #E6FFFA 100%)",
-      }}
-    >
+    <div className="min-h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-hidden flex relative font-['Inter']">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        .HeadingFont { font-family: 'Space Grotesk', sans-serif; }
+        .BodyFont { font-family: 'Inter', sans-serif; }
+        .hex-grid {
+          background-image: radial-gradient(circle at 2px 2px, rgba(245, 158, 11, 0.05) 1px, transparent 0);
+          background-size: 32px 32px;
+        }
+      `}</style>
+
+      <div className="absolute inset-0 hex-grid pointer-events-none opacity-50" />
+
       {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#DBE6E1] flex flex-col
-          transform transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-72 bg-[#111118]/80 backdrop-blur-2xl border-r border-white/5 flex flex-col
+          transform transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:static lg:translate-x-0 lg:transition-[width] lg:duration-300
-          ${sidebarOpen ? "lg:w-64" : "lg:w-20"}
+          lg:static lg:translate-x-0 lg:transition-[width] lg:duration-500
+          ${sidebarOpen ? "lg:w-72" : "lg:w-24"}
         `}
       >
         {/* Logo */}
-        <div className="h-14 sm:h-16 flex items-center justify-between px-4 border-b border-[#DBE6E1]">
+        <div className="h-20 flex items-center justify-between px-6 border-b border-white/5">
           <Link
             to="/dashboard"
-            className={`text-xl font-bold text-[#319795] transition-opacity ${
-              !sidebarOpen ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : ""
-            }`}
+            className={`flex items-center gap-3 transition-opacity duration-300 ${!sidebarOpen ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : "opacity-100"
+              }`}
           >
-            WatchTower
+            <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+              <div className="w-4 h-4 bg-black rounded-sm" />
+            </div>
+            <span className="text-xl font-black HeadingFont uppercase tracking-tighter">Watchtower</span>
           </Link>
+
           {/* Desktop toggle */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-[#E6FFFA] text-[#64748B] hover:text-[#319795] transition hidden lg:block"
+            className="p-2 rounded-xl hover:bg-white/5 text-gray-500 hover:text-white transition-all hidden lg:block"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <motion.div animate={{ rotate: sidebarOpen ? 0 : 180 }}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </motion.div>
           </button>
+
           {/* Mobile close */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-2 rounded-lg hover:bg-[#E6FFFA] text-[#64748B] hover:text-[#319795] transition lg:hidden"
+            className="p-2 rounded-xl hover:bg-white/5 text-gray-500 transition lg:hidden"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 py-8 px-4 space-y-2 overflow-y-auto scrollbar-hide">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -291,309 +331,366 @@ const Dashboard = () => {
                 key={item.name}
                 to={item.path}
                 onClick={handleNavClick}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${
-                  isActive
-                    ? "bg-[#E6FFFA] text-[#319795]"
-                    : "text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#334155]"
-                }`}
+                className={`group flex items-center gap-4 px-4 py-3 rounded-2xl transition-all relative ${isActive
+                    ? "bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+                    : "text-gray-500 hover:text-white hover:bg-white/5"
+                  }`}
               >
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                 </svg>
-                <span className={`font-medium whitespace-nowrap ${!sidebarOpen ? "lg:hidden" : ""}`}>
+                <span className={`text-xs font-black HeadingFont uppercase tracking-widest whitespace-nowrap transition-opacity duration-300 ${!sidebarOpen ? "lg:opacity-0 lg:pointer-events-none" : "opacity-100"}`}>
                   {item.name}
                 </span>
+                {isActive && sidebarOpen && (
+                  <motion.div layoutId="activeNav" className="absolute right-4 w-1.5 h-1.5 bg-black rounded-full" />
+                )}
               </Link>
             );
           })}
         </nav>
 
         {/* User Section */}
-        <div className="p-4 border-t border-[#DBE6E1]">
-          <div className={`flex items-center gap-3 ${!sidebarOpen ? "lg:justify-center" : ""}`}>
-            <div className="w-10 h-10 rounded-full bg-[#319795] flex items-center justify-center text-white font-semibold flex-shrink-0">
+        <div className="p-6 border-t border-white/5 bg-[#0a0a0f]/40">
+          <div className={`flex items-center gap-4 ${!sidebarOpen ? "lg:justify-center" : ""}`}>
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-amber-500 text-xl font-black HeadingFont flex-shrink-0 shadow-inner">
               {user?.name?.charAt(0) || "U"}
             </div>
-            <div className={`flex-1 min-w-0 ${!sidebarOpen ? "lg:hidden" : ""}`}>
-              <p className="text-sm font-medium text-[#334155] truncate">{user?.name || "User"}</p>
-              <p className="text-xs text-[#94A3B8] truncate">{user?.email || ""}</p>
+            <div className={`flex-1 min-w-0 transition-opacity duration-300 ${!sidebarOpen ? "lg:opacity-0 lg:w-0" : "opacity-100"}`}>
+              <p className="text-sm font-black HeadingFont uppercase tracking-widest text-white truncate">{user?.name || "Operative"}</p>
+              <p className="text-[10px] text-gray-500 font-mono tracking-tighter truncate uppercase">{user?.email || "Signal Lost"}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className={`mt-3 w-full py-2 text-sm text-[#64748B] hover:text-red-500 hover:bg-red-50 rounded-lg transition ${
-              !sidebarOpen ? "lg:hidden" : ""
-            }`}
-          >
-            Sign Out
-          </button>
+          {sidebarOpen && (
+            <button
+              onClick={handleLogout}
+              className="mt-6 w-full py-3 text-[10px] font-black HeadingFont uppercase tracking-[0.2em] text-gray-500 hover:text-red-500 hover:bg-red-500/5 rounded-xl border border-transparent hover:border-red-500/20 transition-all"
+            >
+              Terminate Session
+            </button>
+          )}
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 relative z-10 overflow-hidden">
         {/* Header */}
-        <header className="h-14 sm:h-16 bg-white border-b border-[#DBE6E1] flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <header className="h-20 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-8 sticky top-0 z-30">
+          <div className="flex items-center gap-4 min-w-0">
             {/* Mobile hamburger */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-[#E6FFFA] text-[#64748B] hover:text-[#319795] transition lg:hidden flex-shrink-0"
+              className="p-2 rounded-xl hover:bg-white/5 text-gray-500 transition lg:hidden"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             <div className="min-w-0">
-              <h2 className="text-base sm:text-xl font-semibold text-[#1E293B] truncate">Dashboard</h2>
-              <p className="text-xs sm:text-sm text-[#64748B] hidden sm:block">
-                Welcome back, {user?.name?.split(" ")[0] || "User"}!
-              </p>
+              <div className="flex items-center gap-2 mb-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                <span className="text-[10px] font-black HeadingFont uppercase tracking-[0.3em] text-gray-600">Secure Protocol v4.2</span>
+              </div>
+              <h2 className="text-xl font-black HeadingFont uppercase tracking-tight text-white truncate">Command Center</h2>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            {/* Search — hidden on small screens */}
-            <div className="relative hidden md:block">
+
+          <div className="flex items-center gap-6">
+            {/* Search */}
+            <div className="relative hidden md:block group">
               <input
                 type="text"
-                placeholder="Search..."
-                className="w-40 lg:w-64 pl-10 pr-4 py-2 bg-[#F8FAFC] border border-[#DBE6E1] rounded-lg text-[#334155] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#319795] focus:border-transparent transition text-sm"
+                placeholder="Search nodes..."
+                className="w-64 pl-12 pr-4 py-3 bg-white/5 border border-white/5 rounded-2xl text-xs font-medium HeadingFont uppercase tracking-widest text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:bg-white/[0.08] transition-all"
               />
-              <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-amber-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
 
-            {/* Notifications */}
-            <button className="relative p-2 text-[#64748B] hover:text-[#319795] hover:bg-[#E6FFFA] rounded-lg transition">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-
             {/* Add Monitor Button */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(245, 158, 11, 0.4)" }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 bg-[#319795] hover:bg-[#2C7A7B] text-white font-medium rounded-lg transition text-sm"
+              className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-black font-black HeadingFont uppercase tracking-widest text-[10px] rounded-2xl shadow-[0_0_15px_rgba(245,158,11,0.2)]"
             >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
               </svg>
-              <span className="hidden sm:inline">Add Monitor</span>
-            </button>
+              Enlist Monitor
+            </motion.button>
           </div>
         </header>
 
         {/* Dashboard Content */}
-        <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          >
             {stats.map((stat, index) => (
-              <div
+              <motion.div
                 key={index}
-                className="bg-white rounded-xl border border-[#DBE6E1] p-3 sm:p-6 hover:shadow-lg transition"
+                variants={itemVariants}
+                whileHover={{ y: -5, borderColor: "rgba(245, 158, 11, 0.3)" }}
+                className="bg-[#111118]/40 rounded-[2rem] border border-white/5 p-8 relative overflow-hidden group transition-all"
               >
-                <div className="flex items-center justify-between mb-2 sm:mb-4">
-                  <div className="p-1.5 sm:p-2 bg-[#E6FFFA] rounded-lg text-[#319795]">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/[0.02] rounded-full blur-3xl group-hover:bg-amber-500/[0.05] transition-colors" />
+
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-amber-500 border border-white/5 transition-colors group-hover:border-amber-500/20 group-hover:bg-amber-500/5">
                     {stat.icon}
                   </div>
                   <span
-                    className={`text-[10px] sm:text-sm font-medium ${
-                      stat.changeType === "positive" ? "text-green-600" : "text-red-600"
-                    }`}
+                    className={`text-[10px] font-black HeadingFont uppercase tracking-widest py-1.5 px-3 rounded-xl border ${stat.changeType === "positive"
+                        ? "text-green-500 border-green-500/10 bg-green-500/5"
+                        : "text-red-500 border-red-500/10 bg-red-500/5"
+                      }`}
                   >
                     {stat.change}
                   </span>
                 </div>
-                <h3 className="text-lg sm:text-2xl font-bold text-[#1E293B]">{stat.value}</h3>
-                <p className="text-xs sm:text-sm text-[#64748B]">{stat.title}</p>
-              </div>
+                <h3 className="text-4xl font-black HeadingFont text-white mb-2 tracking-tighter">{stat.value}</h3>
+                <p className="text-[10px] font-black HeadingFont uppercase tracking-[0.2em] text-gray-500">{stat.title}</p>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* Monitors Table */}
-            <div className="xl:col-span-2 bg-white rounded-xl border border-[#DBE6E1] overflow-hidden">
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#DBE6E1] flex items-center justify-between">
-                <h3 className="font-semibold text-[#1E293B] text-sm sm:text-base">Monitors</h3>
-                <Link to="/monitor" className="text-xs sm:text-sm text-[#319795] hover:text-[#2C7A7B] font-medium">
-                  View All
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+              className="xl:col-span-2 bg-[#111118]/60 rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col"
+            >
+              <div className="px-10 py-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                <div>
+                  <h3 className="text-sm font-black HeadingFont uppercase tracking-[0.3em] text-gray-400">Deployed Nodes</h3>
+                  <p className="text-[10px] text-gray-600 font-mono mt-1 tracking-widest">Active Surveillance Registry</p>
+                </div>
+                <Link to="/monitor" className="text-[10px] font-black HeadingFont uppercase tracking-widest text-amber-500 hover:text-amber-400 transition-colors border border-amber-500/20 px-4 py-2 rounded-xl hover:bg-amber-500/5">
+                  Full Manifest
                 </Link>
               </div>
-              <div className="divide-y divide-[#DBE6E1] max-h-72 sm:max-h-96 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto divide-y divide-white/5 max-h-[500px] scrollbar-hide">
                 {websites.length === 0 ? (
-                  <div className="px-4 sm:px-6 py-8 sm:py-12 text-center text-[#64748B]">
-                    <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 text-[#DBE6E1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-sm">No monitors yet. Add your first one!</p>
+                  <div className="py-32 text-center">
+                    <div className="w-20 h-20 bg-white/5 rounded-[2rem] flex items-center justify-center text-gray-700 mx-auto mb-6">
+                      <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-xs font-black HeadingFont uppercase tracking-widest text-gray-600">No signals detected in this sector</p>
+                    <button onClick={() => setShowAddModal(true)} className="mt-4 text-[10px] text-amber-500 font-bold uppercase tracking-widest">Initiate First Deployment</button>
                   </div>
                 ) : (
-                  websites.map((website) => (
-                    <div
+                  websites.map((website, i) => (
+                    <motion.div
                       key={website.id}
-                      className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between hover:bg-[#F8FAFC] transition gap-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + i * 0.05 }}
+                      className="px-10 py-6 flex items-center justify-between hover:bg-white/[0.03] active:bg-white/[0.05] transition-all group cursor-pointer"
+                      onClick={() => navigate(`/monitor/${website.name}`)}
                     >
-                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                      <div className="flex items-center gap-6 min-w-0 flex-1">
+                        <div className="relative">
+                          <div className="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.4)]" />
+                          <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-20" />
+                        </div>
                         <div className="min-w-0">
-                          <div className="font-medium text-[#1E293B] text-sm sm:text-base truncate">
+                          <div className="font-black HeadingFont uppercase tracking-tight text-white text-base group-hover:text-amber-500 transition-colors">
                             {website.name}
                           </div>
-                          <div className="text-xs sm:text-sm text-[#64748B] truncate max-w-[120px] sm:max-w-xs">
-                            {website.url}
+                          <div className="text-[10px] text-gray-500 font-mono tracking-tighter truncate max-w-xs mt-1">
+                            LOG: {website.url}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                        <span className="text-xs sm:text-sm text-green-600 font-medium hidden xs:inline">
-                          Online
-                        </span>
-                        <button
-                          onClick={() => navigate(`/monitor/${website.name}`)}
-                          className="text-[#319795] hover:text-[#2C7A7B] text-xs sm:text-sm font-medium whitespace-nowrap"
-                        >
-                          Details
-                        </button>
+                      <div className="flex items-center gap-6 flex-shrink-0">
+                        <div className="hidden sm:block text-right">
+                          <div className="text-[10px] font-black HeadingFont uppercase tracking-widest text-green-500">Node Secure</div>
+                          <div className="text-[10px] text-gray-600 font-mono tracking-tighter uppercase mt-0.5">Uptime: 100%</div>
+                        </div>
+                        <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-amber-500 group-hover:text-black transition-all">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))
                 )}
               </div>
-            </div>
+            </motion.div>
 
             {/* Recent Activity */}
-            <div className="bg-white rounded-xl border border-[#DBE6E1]">
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#DBE6E1]">
-                <h3 className="font-semibold text-[#1E293B] text-sm sm:text-base">Recent Activity</h3>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              className="bg-[#111118]/60 rounded-[2.5rem] border border-white/5 flex flex-col"
+            >
+              <div className="px-8 py-8 border-b border-white/5 bg-white/[0.02]">
+                <h3 className="text-sm font-black HeadingFont uppercase tracking-[0.3em] text-gray-400">Signal Intelligence</h3>
+                <p className="text-[10px] text-gray-600 font-mono mt-1 tracking-widest">Real-time Stream</p>
               </div>
-              <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 max-h-64 sm:max-h-none overflow-y-auto">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-2 sm:gap-3">
-                    <div
-                      className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${
-                        activity.status === "critical"
-                          ? "bg-red-500"
-                          : activity.status === "success"
-                          ? "bg-green-500"
-                          : activity.status === "warning"
-                          ? "bg-yellow-500"
-                          : "bg-blue-500"
-                      }`}
-                    ></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm text-[#334155]">{activity.message}</p>
-                      <p className="text-[10px] sm:text-xs text-[#94A3B8]">{activity.time}</p>
+              <div className="flex-1 p-6 space-y-4 overflow-y-auto scrollbar-hide">
+                {recentActivity.map((activity, i) => (
+                  <motion.div
+                    key={activity.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 + i * 0.1 }}
+                    className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.02] hover:border-white/5 transition-all"
+                  >
+                    <div className="mt-1">
+                      <div className={`w-2 h-2 rounded-full shadow-lg ${activity.status === "critical" ? "bg-red-500 shadow-red-500/40" :
+                          activity.status === "success" ? "bg-green-500 shadow-green-500/40" :
+                            activity.status === "warning" ? "bg-amber-500 shadow-amber-500/40" : "bg-blue-500 shadow-blue-500/40"
+                        }`} />
                     </div>
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-200 HeadingFont uppercase tracking-tight mb-1">{activity.message}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-600 font-mono uppercase tracking-tighter">Event Time:</span>
+                        <span className="text-[10px] text-amber-500/50 font-mono uppercase tracking-tighter">{activity.time}</span>
+                      </div>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
-              <div className="px-4 sm:px-6 py-2 sm:py-3 border-t border-[#DBE6E1]">
-                <a href="#" className="text-xs sm:text-sm text-[#319795] hover:text-[#2C7A7B] font-medium">
-                  View All Activity →
-                </a>
+              <div className="p-8 border-t border-white/5">
+                <button className="w-full py-3 text-[10px] font-black HeadingFont uppercase tracking-widest text-gray-500 hover:text-white transition-colors text-center border border-white/5 rounded-2xl hover:bg-white/5">
+                  Analyze Historical Data →
+                </button>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </main>
 
       {/* Add Monitor Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowAddModal(false)}
-          ></div>
-
-          {/* Modal — slides up on mobile, centered on desktop */}
-          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-md sm:mx-4 p-4 sm:p-6 border border-[#DBE6E1] max-h-[90vh] overflow-y-auto">
-            {/* Close Button */}
-            <button
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-6 sm:p-0">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-[#0a0a0f]/90 backdrop-blur-md"
               onClick={() => setShowAddModal(false)}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-[#94A3B8] hover:text-[#334155] transition"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 50 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative bg-[#111118] border border-white/10 w-full sm:max-w-lg rounded-[2.5rem] p-10 shadow-3xl overflow-hidden"
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+              <div className="absolute top-0 left-0 w-full h-1 bg-amber-500/20" />
+              <div className="absolute top-0 left-0 w-1/3 h-1 bg-amber-500" />
 
-            {/* Drag handle for mobile */}
-            <div className="w-10 h-1 bg-[#DBE6E1] rounded-full mx-auto mb-4 sm:hidden"></div>
+              {/* Close Button */}
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="absolute top-8 right-8 text-gray-600 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
 
-            {/* Modal Header */}
-            <div className="mb-4 sm:mb-6 pr-8">
-              <h3 className="text-lg sm:text-xl font-semibold text-[#1E293B]">Add New Monitor</h3>
-              <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-                Enter the details of the website you want to monitor
-              </p>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleAddMonitor} className="space-y-3 sm:space-y-4">
-              {addError && (
-                <div className="p-2 sm:p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-xs sm:text-sm">
-                  {addError}
+              {/* Modal Header */}
+              <div className="mb-10">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+                  <span className="text-[10px] font-black HeadingFont uppercase tracking-[0.4em] text-gray-500">Initiate Protocol</span>
                 </div>
-              )}
-
-              <div>
-                <label htmlFor="monitorName" className="block text-xs sm:text-sm font-medium text-[#334155] mb-1.5">
-                  Monitor Name
-                </label>
-                <input
-                  id="monitorName"
-                  type="text"
-                  value={newMonitor.name}
-                  onChange={(e) => setNewMonitor((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-[#DBE6E1] rounded-lg text-[#334155] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#319795] focus:border-transparent transition text-sm"
-                  placeholder="e.g., My Website"
-                />
+                <h3 className="text-3xl font-black HeadingFont uppercase tracking-tight text-white">Enlist Monitor</h3>
+                <p className="text-sm text-gray-500 BodyFont mt-2">Deploy a new surveillance node to the specified endpoint.</p>
               </div>
 
-              <div>
-                <label htmlFor="monitorUrl" className="block text-xs sm:text-sm font-medium text-[#334155] mb-1.5">
-                  Website URL
-                </label>
-                <input
-                  id="monitorUrl"
-                  type="url"
-                  value={newMonitor.url}
-                  onChange={(e) => setNewMonitor((prev) => ({ ...prev, url: e.target.value }))}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border border-[#DBE6E1] rounded-lg text-[#334155] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#319795] focus:border-transparent transition text-sm"
-                  placeholder="e.g., https://example.com"
-                />
-              </div>
+              {/* Form */}
+              <form onSubmit={handleAddMonitor} className="space-y-6">
+                {addError && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black HeadingFont uppercase tracking-widest text-center"
+                  >
+                    DEPLOYMENT FAILED: {addError}
+                  </motion.div>
+                )}
 
-              <div className="flex gap-3 pt-2 sm:pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2.5 sm:py-3 px-4 bg-[#F8FAFC] hover:bg-[#DBE6E1] text-[#64748B] font-medium rounded-lg border border-[#DBE6E1] transition text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={addingMonitor}
-                  className="flex-1 py-2.5 sm:py-3 px-4 bg-[#319795] hover:bg-[#2C7A7B] disabled:bg-[#319795]/50 text-white font-medium rounded-lg transition flex items-center justify-center text-sm"
-                >
-                  {addingMonitor ? (
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  ) : (
-                    "Add Monitor"
-                  )}
-                </button>
-              </div>
-            </form>
+                <div className="space-y-2">
+                  <label htmlFor="monitorName" className="text-[10px] font-black HeadingFont uppercase tracking-[0.2em] text-gray-600 ml-1">
+                    Designation
+                  </label>
+                  <input
+                    id="monitorName"
+                    type="text"
+                    autoComplete="off"
+                    value={newMonitor.name}
+                    onChange={(e) => setNewMonitor((prev) => ({ ...prev, name: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold HeadingFont text-white placeholder-gray-700 outline-none focus:ring-1 focus:ring-amber-500/50 transition-all"
+                    placeholder="E.G. PRIMARY-DATACENTER"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="monitorUrl" className="text-[10px] font-black HeadingFont uppercase tracking-[0.2em] text-gray-600 ml-1">
+                    Target Endpoint (URL)
+                  </label>
+                  <input
+                    id="monitorUrl"
+                    type="url"
+                    autoComplete="off"
+                    value={newMonitor.url}
+                    onChange={(e) => setNewMonitor((prev) => ({ ...prev, url: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold HeadingFont text-white placeholder-gray-700 outline-none focus:ring-1 focus:ring-amber-500/50 transition-all"
+                    placeholder="https://core-service.network"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="flex-1 py-4 text-[10px] font-black HeadingFont uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
+                  >
+                    Abort Deployment
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(245, 158, 11, 0.4)" }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={addingMonitor}
+                    className="flex-[1.5] py-4 bg-amber-500 text-black font-black HeadingFont uppercase tracking-widest text-xs rounded-2xl flex items-center justify-center transition-all disabled:opacity-50"
+                  >
+                    {addingMonitor ? (
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : (
+                      "Execute Enlistment"
+                    )}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };
