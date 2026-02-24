@@ -1,6 +1,21 @@
 # WatchTower - Website Monitoring Application
 
-A full-stack website monitoring application with real-time alerts, uptime tracking, and performance metrics.
+A full-stack website monitoring application with 
+real-time alerts, uptime tracking, and performance metrics.
+
+# Images
+ Landing Page
+![alt text](image-3.png)
+
+![alt text](image-4.png)
+![alt text](image-5.png)
+# DashBoard
+
+![alt text](image-6.png)
+
+# Monitoring
+![alt text](image-7.png)
+![alt text](image-8.png)
 
 ## Features
 
@@ -30,7 +45,6 @@ A full-stack website monitoring application with real-time alerts, uptime tracki
 - Tailwind CSS
 - Lucide React (icons)
 
-## Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)

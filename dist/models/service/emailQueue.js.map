@@ -1,0 +1,1 @@
+{"version":3,"file":"emailQueue.js","sourceRoot":"","sources":["../../../src/models/service/emailQueue.ts"],"names":[],"mappings":"AAAA,wBAAwB;AACxB,OAAO,MAAM,MAAM,YAAY,CAAC;AAShC,MAAM,CAAC,KAAK,UAAU,aAAa,CAAC,OAAqB;IACvD,MAAM,MAAM,CAAC,KAAK,CAAC,aAAa,EAAE,IAAI,CAAC,SAAS,CAAC,OAAO,CAAC,CAAC,CAAC;AAC7D,CAAC"}
