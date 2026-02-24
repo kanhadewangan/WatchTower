@@ -1,0 +1,1 @@
+{"version":3,"file":"websites.d.ts","sourceRoot":"","sources":["../../../src/models/controller/websites.ts"],"names":[],"mappings":"AAQA,OAAO,QAAQ,2BAA2B,CAAC;IACvC,UAAU,OAAO;QACb,IAAI,CAAC,EAAE;YAAE,MAAM,EAAE,MAAM,CAAC;YAAC,SAAS,EAAE,MAAM,CAAA;SAAE,CAAC;KAChD;CACJ;AAqFD,QAAA,MAAM,OAAO,4CAAS,CAAC;AAEvB,eAAe,OAAO,CAAC"}

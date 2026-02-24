@@ -1,0 +1,1458 @@
+import type * as runtime from "@prisma/client/runtime/client";
+import type * as $Enums from "../enums.js";
+import type * as Prisma from "../internal/prismaNamespace.js";
+/**
+ * Model checks
+ *
+ */
+export type checksModel = runtime.Types.Result.DefaultSelection<Prisma.$checksPayload>;
+export type AggregateChecks = {
+    _count: ChecksCountAggregateOutputType | null;
+    _avg: ChecksAvgAggregateOutputType | null;
+    _sum: ChecksSumAggregateOutputType | null;
+    _min: ChecksMinAggregateOutputType | null;
+    _max: ChecksMaxAggregateOutputType | null;
+};
+export type ChecksAvgAggregateOutputType = {
+    status_code: number | null;
+    response_time: number | null;
+};
+export type ChecksSumAggregateOutputType = {
+    status_code: number | null;
+    response_time: number | null;
+};
+export type ChecksMinAggregateOutputType = {
+    id: string | null;
+    website_id: string | null;
+    userId: string | null;
+    status_code: number | null;
+    response_time: number | null;
+    status: $Enums.status | null;
+    created_at: Date | null;
+    reigon: $Enums.reigon | null;
+};
+export type ChecksMaxAggregateOutputType = {
+    id: string | null;
+    website_id: string | null;
+    userId: string | null;
+    status_code: number | null;
+    response_time: number | null;
+    status: $Enums.status | null;
+    created_at: Date | null;
+    reigon: $Enums.reigon | null;
+};
+export type ChecksCountAggregateOutputType = {
+    id: number;
+    website_id: number;
+    userId: number;
+    status_code: number;
+    response_time: number;
+    status: number;
+    created_at: number;
+    reigon: number;
+    _all: number;
+};
+export type ChecksAvgAggregateInputType = {
+    status_code?: true;
+    response_time?: true;
+};
+export type ChecksSumAggregateInputType = {
+    status_code?: true;
+    response_time?: true;
+};
+export type ChecksMinAggregateInputType = {
+    id?: true;
+    website_id?: true;
+    userId?: true;
+    status_code?: true;
+    response_time?: true;
+    status?: true;
+    created_at?: true;
+    reigon?: true;
+};
+export type ChecksMaxAggregateInputType = {
+    id?: true;
+    website_id?: true;
+    userId?: true;
+    status_code?: true;
+    response_time?: true;
+    status?: true;
+    created_at?: true;
+    reigon?: true;
+};
+export type ChecksCountAggregateInputType = {
+    id?: true;
+    website_id?: true;
+    userId?: true;
+    status_code?: true;
+    response_time?: true;
+    status?: true;
+    created_at?: true;
+    reigon?: true;
+    _all?: true;
+};
+export type ChecksAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Filter which checks to aggregate.
+     */
+    where?: Prisma.checksWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of checks to fetch.
+     */
+    orderBy?: Prisma.checksOrderByWithRelationInput | Prisma.checksOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the start position
+     */
+    cursor?: Prisma.checksWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` checks from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` checks.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Count returned checks
+    **/
+    _count?: true | ChecksCountAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to average
+    **/
+    _avg?: ChecksAvgAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to sum
+    **/
+    _sum?: ChecksSumAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to find the minimum value
+    **/
+    _min?: ChecksMinAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to find the maximum value
+    **/
+    _max?: ChecksMaxAggregateInputType;
+};
+export type GetChecksAggregateType<T extends ChecksAggregateArgs> = {
+    [P in keyof T & keyof AggregateChecks]: P extends '_count' | 'count' ? T[P] extends true ? number : Prisma.GetScalarType<T[P], AggregateChecks[P]> : Prisma.GetScalarType<T[P], AggregateChecks[P]>;
+};
+export type checksGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.checksWhereInput;
+    orderBy?: Prisma.checksOrderByWithAggregationInput | Prisma.checksOrderByWithAggregationInput[];
+    by: Prisma.ChecksScalarFieldEnum[] | Prisma.ChecksScalarFieldEnum;
+    having?: Prisma.checksScalarWhereWithAggregatesInput;
+    take?: number;
+    skip?: number;
+    _count?: ChecksCountAggregateInputType | true;
+    _avg?: ChecksAvgAggregateInputType;
+    _sum?: ChecksSumAggregateInputType;
+    _min?: ChecksMinAggregateInputType;
+    _max?: ChecksMaxAggregateInputType;
+};
+export type ChecksGroupByOutputType = {
+    id: string;
+    website_id: string;
+    userId: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at: Date;
+    reigon: $Enums.reigon;
+    _count: ChecksCountAggregateOutputType | null;
+    _avg: ChecksAvgAggregateOutputType | null;
+    _sum: ChecksSumAggregateOutputType | null;
+    _min: ChecksMinAggregateOutputType | null;
+    _max: ChecksMaxAggregateOutputType | null;
+};
+type GetChecksGroupByPayload<T extends checksGroupByArgs> = Prisma.PrismaPromise<Array<Prisma.PickEnumerable<ChecksGroupByOutputType, T['by']> & {
+    [P in ((keyof T) & (keyof ChecksGroupByOutputType))]: P extends '_count' ? T[P] extends boolean ? number : Prisma.GetScalarType<T[P], ChecksGroupByOutputType[P]> : Prisma.GetScalarType<T[P], ChecksGroupByOutputType[P]>;
+}>>;
+export type checksWhereInput = {
+    AND?: Prisma.checksWhereInput | Prisma.checksWhereInput[];
+    OR?: Prisma.checksWhereInput[];
+    NOT?: Prisma.checksWhereInput | Prisma.checksWhereInput[];
+    id?: Prisma.StringFilter<"checks"> | string;
+    website_id?: Prisma.StringFilter<"checks"> | string;
+    userId?: Prisma.StringFilter<"checks"> | string;
+    status_code?: Prisma.IntFilter<"checks"> | number;
+    response_time?: Prisma.IntFilter<"checks"> | number;
+    status?: Prisma.EnumstatusFilter<"checks"> | $Enums.status;
+    created_at?: Prisma.DateTimeFilter<"checks"> | Date | string;
+    reigon?: Prisma.EnumreigonFilter<"checks"> | $Enums.reigon;
+    website?: Prisma.XOR<Prisma.WebsiteScalarRelationFilter, Prisma.WebsiteWhereInput>;
+    user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>;
+};
+export type checksOrderByWithRelationInput = {
+    id?: Prisma.SortOrder;
+    website_id?: Prisma.SortOrder;
+    userId?: Prisma.SortOrder;
+    status_code?: Prisma.SortOrder;
+    response_time?: Prisma.SortOrder;
+    status?: Prisma.SortOrder;
+    created_at?: Prisma.SortOrder;
+    reigon?: Prisma.SortOrder;
+    website?: Prisma.WebsiteOrderByWithRelationInput;
+    user?: Prisma.usersOrderByWithRelationInput;
+};
+export type checksWhereUniqueInput = Prisma.AtLeast<{
+    id?: string;
+    AND?: Prisma.checksWhereInput | Prisma.checksWhereInput[];
+    OR?: Prisma.checksWhereInput[];
+    NOT?: Prisma.checksWhereInput | Prisma.checksWhereInput[];
+    website_id?: Prisma.StringFilter<"checks"> | string;
+    userId?: Prisma.StringFilter<"checks"> | string;
+    status_code?: Prisma.IntFilter<"checks"> | number;
+    response_time?: Prisma.IntFilter<"checks"> | number;
+    status?: Prisma.EnumstatusFilter<"checks"> | $Enums.status;
+    created_at?: Prisma.DateTimeFilter<"checks"> | Date | string;
+    reigon?: Prisma.EnumreigonFilter<"checks"> | $Enums.reigon;
+    website?: Prisma.XOR<Prisma.WebsiteScalarRelationFilter, Prisma.WebsiteWhereInput>;
+    user?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>;
+}, "id">;
+export type checksOrderByWithAggregationInput = {
+    id?: Prisma.SortOrder;
+    website_id?: Prisma.SortOrder;
+    userId?: Prisma.SortOrder;
+    status_code?: Prisma.SortOrder;
+    response_time?: Prisma.SortOrder;
+    status?: Prisma.SortOrder;
+    created_at?: Prisma.SortOrder;
+    reigon?: Prisma.SortOrder;
+    _count?: Prisma.checksCountOrderByAggregateInput;
+    _avg?: Prisma.checksAvgOrderByAggregateInput;
+    _max?: Prisma.checksMaxOrderByAggregateInput;
+    _min?: Prisma.checksMinOrderByAggregateInput;
+    _sum?: Prisma.checksSumOrderByAggregateInput;
+};
+export type checksScalarWhereWithAggregatesInput = {
+    AND?: Prisma.checksScalarWhereWithAggregatesInput | Prisma.checksScalarWhereWithAggregatesInput[];
+    OR?: Prisma.checksScalarWhereWithAggregatesInput[];
+    NOT?: Prisma.checksScalarWhereWithAggregatesInput | Prisma.checksScalarWhereWithAggregatesInput[];
+    id?: Prisma.StringWithAggregatesFilter<"checks"> | string;
+    website_id?: Prisma.StringWithAggregatesFilter<"checks"> | string;
+    userId?: Prisma.StringWithAggregatesFilter<"checks"> | string;
+    status_code?: Prisma.IntWithAggregatesFilter<"checks"> | number;
+    response_time?: Prisma.IntWithAggregatesFilter<"checks"> | number;
+    status?: Prisma.EnumstatusWithAggregatesFilter<"checks"> | $Enums.status;
+    created_at?: Prisma.DateTimeWithAggregatesFilter<"checks"> | Date | string;
+    reigon?: Prisma.EnumreigonWithAggregatesFilter<"checks"> | $Enums.reigon;
+};
+export type checksCreateInput = {
+    id?: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+    website: Prisma.WebsiteCreateNestedOneWithoutChecksInput;
+    user: Prisma.usersCreateNestedOneWithoutChecksInput;
+};
+export type checksUncheckedCreateInput = {
+    id?: string;
+    website_id: string;
+    userId: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+};
+export type checksUpdateInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+    website?: Prisma.WebsiteUpdateOneRequiredWithoutChecksNestedInput;
+    user?: Prisma.usersUpdateOneRequiredWithoutChecksNestedInput;
+};
+export type checksUncheckedUpdateInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    website_id?: Prisma.StringFieldUpdateOperationsInput | string;
+    userId?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+};
+export type checksCreateManyInput = {
+    id?: string;
+    website_id: string;
+    userId: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+};
+export type checksUpdateManyMutationInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+};
+export type checksUncheckedUpdateManyInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    website_id?: Prisma.StringFieldUpdateOperationsInput | string;
+    userId?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+};
+export type ChecksListRelationFilter = {
+    every?: Prisma.checksWhereInput;
+    some?: Prisma.checksWhereInput;
+    none?: Prisma.checksWhereInput;
+};
+export type checksOrderByRelationAggregateInput = {
+    _count?: Prisma.SortOrder;
+};
+export type checksCountOrderByAggregateInput = {
+    id?: Prisma.SortOrder;
+    website_id?: Prisma.SortOrder;
+    userId?: Prisma.SortOrder;
+    status_code?: Prisma.SortOrder;
+    response_time?: Prisma.SortOrder;
+    status?: Prisma.SortOrder;
+    created_at?: Prisma.SortOrder;
+    reigon?: Prisma.SortOrder;
+};
+export type checksAvgOrderByAggregateInput = {
+    status_code?: Prisma.SortOrder;
+    response_time?: Prisma.SortOrder;
+};
+export type checksMaxOrderByAggregateInput = {
+    id?: Prisma.SortOrder;
+    website_id?: Prisma.SortOrder;
+    userId?: Prisma.SortOrder;
+    status_code?: Prisma.SortOrder;
+    response_time?: Prisma.SortOrder;
+    status?: Prisma.SortOrder;
+    created_at?: Prisma.SortOrder;
+    reigon?: Prisma.SortOrder;
+};
+export type checksMinOrderByAggregateInput = {
+    id?: Prisma.SortOrder;
+    website_id?: Prisma.SortOrder;
+    userId?: Prisma.SortOrder;
+    status_code?: Prisma.SortOrder;
+    response_time?: Prisma.SortOrder;
+    status?: Prisma.SortOrder;
+    created_at?: Prisma.SortOrder;
+    reigon?: Prisma.SortOrder;
+};
+export type checksSumOrderByAggregateInput = {
+    status_code?: Prisma.SortOrder;
+    response_time?: Prisma.SortOrder;
+};
+export type checksCreateNestedManyWithoutUserInput = {
+    create?: Prisma.XOR<Prisma.checksCreateWithoutUserInput, Prisma.checksUncheckedCreateWithoutUserInput> | Prisma.checksCreateWithoutUserInput[] | Prisma.checksUncheckedCreateWithoutUserInput[];
+    connectOrCreate?: Prisma.checksCreateOrConnectWithoutUserInput | Prisma.checksCreateOrConnectWithoutUserInput[];
+    createMany?: Prisma.checksCreateManyUserInputEnvelope;
+    connect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+};
+export type checksUncheckedCreateNestedManyWithoutUserInput = {
+    create?: Prisma.XOR<Prisma.checksCreateWithoutUserInput, Prisma.checksUncheckedCreateWithoutUserInput> | Prisma.checksCreateWithoutUserInput[] | Prisma.checksUncheckedCreateWithoutUserInput[];
+    connectOrCreate?: Prisma.checksCreateOrConnectWithoutUserInput | Prisma.checksCreateOrConnectWithoutUserInput[];
+    createMany?: Prisma.checksCreateManyUserInputEnvelope;
+    connect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+};
+export type checksUpdateManyWithoutUserNestedInput = {
+    create?: Prisma.XOR<Prisma.checksCreateWithoutUserInput, Prisma.checksUncheckedCreateWithoutUserInput> | Prisma.checksCreateWithoutUserInput[] | Prisma.checksUncheckedCreateWithoutUserInput[];
+    connectOrCreate?: Prisma.checksCreateOrConnectWithoutUserInput | Prisma.checksCreateOrConnectWithoutUserInput[];
+    upsert?: Prisma.checksUpsertWithWhereUniqueWithoutUserInput | Prisma.checksUpsertWithWhereUniqueWithoutUserInput[];
+    createMany?: Prisma.checksCreateManyUserInputEnvelope;
+    set?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    disconnect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    delete?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    connect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    update?: Prisma.checksUpdateWithWhereUniqueWithoutUserInput | Prisma.checksUpdateWithWhereUniqueWithoutUserInput[];
+    updateMany?: Prisma.checksUpdateManyWithWhereWithoutUserInput | Prisma.checksUpdateManyWithWhereWithoutUserInput[];
+    deleteMany?: Prisma.checksScalarWhereInput | Prisma.checksScalarWhereInput[];
+};
+export type checksUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: Prisma.XOR<Prisma.checksCreateWithoutUserInput, Prisma.checksUncheckedCreateWithoutUserInput> | Prisma.checksCreateWithoutUserInput[] | Prisma.checksUncheckedCreateWithoutUserInput[];
+    connectOrCreate?: Prisma.checksCreateOrConnectWithoutUserInput | Prisma.checksCreateOrConnectWithoutUserInput[];
+    upsert?: Prisma.checksUpsertWithWhereUniqueWithoutUserInput | Prisma.checksUpsertWithWhereUniqueWithoutUserInput[];
+    createMany?: Prisma.checksCreateManyUserInputEnvelope;
+    set?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    disconnect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    delete?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    connect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    update?: Prisma.checksUpdateWithWhereUniqueWithoutUserInput | Prisma.checksUpdateWithWhereUniqueWithoutUserInput[];
+    updateMany?: Prisma.checksUpdateManyWithWhereWithoutUserInput | Prisma.checksUpdateManyWithWhereWithoutUserInput[];
+    deleteMany?: Prisma.checksScalarWhereInput | Prisma.checksScalarWhereInput[];
+};
+export type checksCreateNestedManyWithoutWebsiteInput = {
+    create?: Prisma.XOR<Prisma.checksCreateWithoutWebsiteInput, Prisma.checksUncheckedCreateWithoutWebsiteInput> | Prisma.checksCreateWithoutWebsiteInput[] | Prisma.checksUncheckedCreateWithoutWebsiteInput[];
+    connectOrCreate?: Prisma.checksCreateOrConnectWithoutWebsiteInput | Prisma.checksCreateOrConnectWithoutWebsiteInput[];
+    createMany?: Prisma.checksCreateManyWebsiteInputEnvelope;
+    connect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+};
+export type checksUncheckedCreateNestedManyWithoutWebsiteInput = {
+    create?: Prisma.XOR<Prisma.checksCreateWithoutWebsiteInput, Prisma.checksUncheckedCreateWithoutWebsiteInput> | Prisma.checksCreateWithoutWebsiteInput[] | Prisma.checksUncheckedCreateWithoutWebsiteInput[];
+    connectOrCreate?: Prisma.checksCreateOrConnectWithoutWebsiteInput | Prisma.checksCreateOrConnectWithoutWebsiteInput[];
+    createMany?: Prisma.checksCreateManyWebsiteInputEnvelope;
+    connect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+};
+export type checksUpdateManyWithoutWebsiteNestedInput = {
+    create?: Prisma.XOR<Prisma.checksCreateWithoutWebsiteInput, Prisma.checksUncheckedCreateWithoutWebsiteInput> | Prisma.checksCreateWithoutWebsiteInput[] | Prisma.checksUncheckedCreateWithoutWebsiteInput[];
+    connectOrCreate?: Prisma.checksCreateOrConnectWithoutWebsiteInput | Prisma.checksCreateOrConnectWithoutWebsiteInput[];
+    upsert?: Prisma.checksUpsertWithWhereUniqueWithoutWebsiteInput | Prisma.checksUpsertWithWhereUniqueWithoutWebsiteInput[];
+    createMany?: Prisma.checksCreateManyWebsiteInputEnvelope;
+    set?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    disconnect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    delete?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    connect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    update?: Prisma.checksUpdateWithWhereUniqueWithoutWebsiteInput | Prisma.checksUpdateWithWhereUniqueWithoutWebsiteInput[];
+    updateMany?: Prisma.checksUpdateManyWithWhereWithoutWebsiteInput | Prisma.checksUpdateManyWithWhereWithoutWebsiteInput[];
+    deleteMany?: Prisma.checksScalarWhereInput | Prisma.checksScalarWhereInput[];
+};
+export type checksUncheckedUpdateManyWithoutWebsiteNestedInput = {
+    create?: Prisma.XOR<Prisma.checksCreateWithoutWebsiteInput, Prisma.checksUncheckedCreateWithoutWebsiteInput> | Prisma.checksCreateWithoutWebsiteInput[] | Prisma.checksUncheckedCreateWithoutWebsiteInput[];
+    connectOrCreate?: Prisma.checksCreateOrConnectWithoutWebsiteInput | Prisma.checksCreateOrConnectWithoutWebsiteInput[];
+    upsert?: Prisma.checksUpsertWithWhereUniqueWithoutWebsiteInput | Prisma.checksUpsertWithWhereUniqueWithoutWebsiteInput[];
+    createMany?: Prisma.checksCreateManyWebsiteInputEnvelope;
+    set?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    disconnect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    delete?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    connect?: Prisma.checksWhereUniqueInput | Prisma.checksWhereUniqueInput[];
+    update?: Prisma.checksUpdateWithWhereUniqueWithoutWebsiteInput | Prisma.checksUpdateWithWhereUniqueWithoutWebsiteInput[];
+    updateMany?: Prisma.checksUpdateManyWithWhereWithoutWebsiteInput | Prisma.checksUpdateManyWithWhereWithoutWebsiteInput[];
+    deleteMany?: Prisma.checksScalarWhereInput | Prisma.checksScalarWhereInput[];
+};
+export type IntFieldUpdateOperationsInput = {
+    set?: number;
+    increment?: number;
+    decrement?: number;
+    multiply?: number;
+    divide?: number;
+};
+export type EnumstatusFieldUpdateOperationsInput = {
+    set?: $Enums.status;
+};
+export type EnumreigonFieldUpdateOperationsInput = {
+    set?: $Enums.reigon;
+};
+export type checksCreateWithoutUserInput = {
+    id?: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+    website: Prisma.WebsiteCreateNestedOneWithoutChecksInput;
+};
+export type checksUncheckedCreateWithoutUserInput = {
+    id?: string;
+    website_id: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+};
+export type checksCreateOrConnectWithoutUserInput = {
+    where: Prisma.checksWhereUniqueInput;
+    create: Prisma.XOR<Prisma.checksCreateWithoutUserInput, Prisma.checksUncheckedCreateWithoutUserInput>;
+};
+export type checksCreateManyUserInputEnvelope = {
+    data: Prisma.checksCreateManyUserInput | Prisma.checksCreateManyUserInput[];
+    skipDuplicates?: boolean;
+};
+export type checksUpsertWithWhereUniqueWithoutUserInput = {
+    where: Prisma.checksWhereUniqueInput;
+    update: Prisma.XOR<Prisma.checksUpdateWithoutUserInput, Prisma.checksUncheckedUpdateWithoutUserInput>;
+    create: Prisma.XOR<Prisma.checksCreateWithoutUserInput, Prisma.checksUncheckedCreateWithoutUserInput>;
+};
+export type checksUpdateWithWhereUniqueWithoutUserInput = {
+    where: Prisma.checksWhereUniqueInput;
+    data: Prisma.XOR<Prisma.checksUpdateWithoutUserInput, Prisma.checksUncheckedUpdateWithoutUserInput>;
+};
+export type checksUpdateManyWithWhereWithoutUserInput = {
+    where: Prisma.checksScalarWhereInput;
+    data: Prisma.XOR<Prisma.checksUpdateManyMutationInput, Prisma.checksUncheckedUpdateManyWithoutUserInput>;
+};
+export type checksScalarWhereInput = {
+    AND?: Prisma.checksScalarWhereInput | Prisma.checksScalarWhereInput[];
+    OR?: Prisma.checksScalarWhereInput[];
+    NOT?: Prisma.checksScalarWhereInput | Prisma.checksScalarWhereInput[];
+    id?: Prisma.StringFilter<"checks"> | string;
+    website_id?: Prisma.StringFilter<"checks"> | string;
+    userId?: Prisma.StringFilter<"checks"> | string;
+    status_code?: Prisma.IntFilter<"checks"> | number;
+    response_time?: Prisma.IntFilter<"checks"> | number;
+    status?: Prisma.EnumstatusFilter<"checks"> | $Enums.status;
+    created_at?: Prisma.DateTimeFilter<"checks"> | Date | string;
+    reigon?: Prisma.EnumreigonFilter<"checks"> | $Enums.reigon;
+};
+export type checksCreateWithoutWebsiteInput = {
+    id?: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+    user: Prisma.usersCreateNestedOneWithoutChecksInput;
+};
+export type checksUncheckedCreateWithoutWebsiteInput = {
+    id?: string;
+    userId: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+};
+export type checksCreateOrConnectWithoutWebsiteInput = {
+    where: Prisma.checksWhereUniqueInput;
+    create: Prisma.XOR<Prisma.checksCreateWithoutWebsiteInput, Prisma.checksUncheckedCreateWithoutWebsiteInput>;
+};
+export type checksCreateManyWebsiteInputEnvelope = {
+    data: Prisma.checksCreateManyWebsiteInput | Prisma.checksCreateManyWebsiteInput[];
+    skipDuplicates?: boolean;
+};
+export type checksUpsertWithWhereUniqueWithoutWebsiteInput = {
+    where: Prisma.checksWhereUniqueInput;
+    update: Prisma.XOR<Prisma.checksUpdateWithoutWebsiteInput, Prisma.checksUncheckedUpdateWithoutWebsiteInput>;
+    create: Prisma.XOR<Prisma.checksCreateWithoutWebsiteInput, Prisma.checksUncheckedCreateWithoutWebsiteInput>;
+};
+export type checksUpdateWithWhereUniqueWithoutWebsiteInput = {
+    where: Prisma.checksWhereUniqueInput;
+    data: Prisma.XOR<Prisma.checksUpdateWithoutWebsiteInput, Prisma.checksUncheckedUpdateWithoutWebsiteInput>;
+};
+export type checksUpdateManyWithWhereWithoutWebsiteInput = {
+    where: Prisma.checksScalarWhereInput;
+    data: Prisma.XOR<Prisma.checksUpdateManyMutationInput, Prisma.checksUncheckedUpdateManyWithoutWebsiteInput>;
+};
+export type checksCreateManyUserInput = {
+    id?: string;
+    website_id: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+};
+export type checksUpdateWithoutUserInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+    website?: Prisma.WebsiteUpdateOneRequiredWithoutChecksNestedInput;
+};
+export type checksUncheckedUpdateWithoutUserInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    website_id?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+};
+export type checksUncheckedUpdateManyWithoutUserInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    website_id?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+};
+export type checksCreateManyWebsiteInput = {
+    id?: string;
+    userId: string;
+    status_code: number;
+    response_time: number;
+    status: $Enums.status;
+    created_at?: Date | string;
+    reigon: $Enums.reigon;
+};
+export type checksUpdateWithoutWebsiteInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+    user?: Prisma.usersUpdateOneRequiredWithoutChecksNestedInput;
+};
+export type checksUncheckedUpdateWithoutWebsiteInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    userId?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+};
+export type checksUncheckedUpdateManyWithoutWebsiteInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    userId?: Prisma.StringFieldUpdateOperationsInput | string;
+    status_code?: Prisma.IntFieldUpdateOperationsInput | number;
+    response_time?: Prisma.IntFieldUpdateOperationsInput | number;
+    status?: Prisma.EnumstatusFieldUpdateOperationsInput | $Enums.status;
+    created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    reigon?: Prisma.EnumreigonFieldUpdateOperationsInput | $Enums.reigon;
+};
+export type checksSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+    id?: boolean;
+    website_id?: boolean;
+    userId?: boolean;
+    status_code?: boolean;
+    response_time?: boolean;
+    status?: boolean;
+    created_at?: boolean;
+    reigon?: boolean;
+    website?: boolean | Prisma.WebsiteDefaultArgs<ExtArgs>;
+    user?: boolean | Prisma.usersDefaultArgs<ExtArgs>;
+}, ExtArgs["result"]["checks"]>;
+export type checksSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+    id?: boolean;
+    website_id?: boolean;
+    userId?: boolean;
+    status_code?: boolean;
+    response_time?: boolean;
+    status?: boolean;
+    created_at?: boolean;
+    reigon?: boolean;
+    website?: boolean | Prisma.WebsiteDefaultArgs<ExtArgs>;
+    user?: boolean | Prisma.usersDefaultArgs<ExtArgs>;
+}, ExtArgs["result"]["checks"]>;
+export type checksSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+    id?: boolean;
+    website_id?: boolean;
+    userId?: boolean;
+    status_code?: boolean;
+    response_time?: boolean;
+    status?: boolean;
+    created_at?: boolean;
+    reigon?: boolean;
+    website?: boolean | Prisma.WebsiteDefaultArgs<ExtArgs>;
+    user?: boolean | Prisma.usersDefaultArgs<ExtArgs>;
+}, ExtArgs["result"]["checks"]>;
+export type checksSelectScalar = {
+    id?: boolean;
+    website_id?: boolean;
+    userId?: boolean;
+    status_code?: boolean;
+    response_time?: boolean;
+    status?: boolean;
+    created_at?: boolean;
+    reigon?: boolean;
+};
+export type checksOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "website_id" | "userId" | "status_code" | "response_time" | "status" | "created_at" | "reigon", ExtArgs["result"]["checks"]>;
+export type checksInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    website?: boolean | Prisma.WebsiteDefaultArgs<ExtArgs>;
+    user?: boolean | Prisma.usersDefaultArgs<ExtArgs>;
+};
+export type checksIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    website?: boolean | Prisma.WebsiteDefaultArgs<ExtArgs>;
+    user?: boolean | Prisma.usersDefaultArgs<ExtArgs>;
+};
+export type checksIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    website?: boolean | Prisma.WebsiteDefaultArgs<ExtArgs>;
+    user?: boolean | Prisma.usersDefaultArgs<ExtArgs>;
+};
+export type $checksPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    name: "checks";
+    objects: {
+        website: Prisma.$WebsitePayload<ExtArgs>;
+        user: Prisma.$usersPayload<ExtArgs>;
+    };
+    scalars: runtime.Types.Extensions.GetPayloadResult<{
+        id: string;
+        website_id: string;
+        userId: string;
+        status_code: number;
+        response_time: number;
+        status: $Enums.status;
+        created_at: Date;
+        reigon: $Enums.reigon;
+    }, ExtArgs["result"]["checks"]>;
+    composites: {};
+};
+export type checksGetPayload<S extends boolean | null | undefined | checksDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$checksPayload, S>;
+export type checksCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = Omit<checksFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+    select?: ChecksCountAggregateInputType | true;
+};
+export interface checksDelegate<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: {
+        types: Prisma.TypeMap<ExtArgs>['model']['checks'];
+        meta: {
+            name: 'checks';
+        };
+    };
+    /**
+     * Find zero or one Checks that matches the filter.
+     * @param {checksFindUniqueArgs} args - Arguments to find a Checks
+     * @example
+     * // Get one Checks
+     * const checks = await prisma.checks.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends checksFindUniqueArgs>(args: Prisma.SelectSubset<T, checksFindUniqueArgs<ExtArgs>>): Prisma.Prisma__checksClient<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Find one Checks that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {checksFindUniqueOrThrowArgs} args - Arguments to find a Checks
+     * @example
+     * // Get one Checks
+     * const checks = await prisma.checks.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends checksFindUniqueOrThrowArgs>(args: Prisma.SelectSubset<T, checksFindUniqueOrThrowArgs<ExtArgs>>): Prisma.Prisma__checksClient<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Find the first Checks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {checksFindFirstArgs} args - Arguments to find a Checks
+     * @example
+     * // Get one Checks
+     * const checks = await prisma.checks.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends checksFindFirstArgs>(args?: Prisma.SelectSubset<T, checksFindFirstArgs<ExtArgs>>): Prisma.Prisma__checksClient<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Find the first Checks that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {checksFindFirstOrThrowArgs} args - Arguments to find a Checks
+     * @example
+     * // Get one Checks
+     * const checks = await prisma.checks.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends checksFindFirstOrThrowArgs>(args?: Prisma.SelectSubset<T, checksFindFirstOrThrowArgs<ExtArgs>>): Prisma.Prisma__checksClient<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Find zero or more Checks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {checksFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Checks
+     * const checks = await prisma.checks.findMany()
+     *
+     * // Get first 10 Checks
+     * const checks = await prisma.checks.findMany({ take: 10 })
+     *
+     * // Only select the `id`
+     * const checksWithIdOnly = await prisma.checks.findMany({ select: { id: true } })
+     *
+     */
+    findMany<T extends checksFindManyArgs>(args?: Prisma.SelectSubset<T, checksFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>;
+    /**
+     * Create a Checks.
+     * @param {checksCreateArgs} args - Arguments to create a Checks.
+     * @example
+     * // Create one Checks
+     * const Checks = await prisma.checks.create({
+     *   data: {
+     *     // ... data to create a Checks
+     *   }
+     * })
+     *
+     */
+    create<T extends checksCreateArgs>(args: Prisma.SelectSubset<T, checksCreateArgs<ExtArgs>>): Prisma.Prisma__checksClient<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Create many Checks.
+     * @param {checksCreateManyArgs} args - Arguments to create many Checks.
+     * @example
+     * // Create many Checks
+     * const checks = await prisma.checks.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     */
+    createMany<T extends checksCreateManyArgs>(args?: Prisma.SelectSubset<T, checksCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>;
+    /**
+     * Create many Checks and returns the data saved in the database.
+     * @param {checksCreateManyAndReturnArgs} args - Arguments to create many Checks.
+     * @example
+     * // Create many Checks
+     * const checks = await prisma.checks.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     * // Create many Checks and only return the `id`
+     * const checksWithIdOnly = await prisma.checks.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     *
+     */
+    createManyAndReturn<T extends checksCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, checksCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>;
+    /**
+     * Delete a Checks.
+     * @param {checksDeleteArgs} args - Arguments to delete one Checks.
+     * @example
+     * // Delete one Checks
+     * const Checks = await prisma.checks.delete({
+     *   where: {
+     *     // ... filter to delete one Checks
+     *   }
+     * })
+     *
+     */
+    delete<T extends checksDeleteArgs>(args: Prisma.SelectSubset<T, checksDeleteArgs<ExtArgs>>): Prisma.Prisma__checksClient<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Update one Checks.
+     * @param {checksUpdateArgs} args - Arguments to update one Checks.
+     * @example
+     * // Update one Checks
+     * const checks = await prisma.checks.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     *
+     */
+    update<T extends checksUpdateArgs>(args: Prisma.SelectSubset<T, checksUpdateArgs<ExtArgs>>): Prisma.Prisma__checksClient<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Delete zero or more Checks.
+     * @param {checksDeleteManyArgs} args - Arguments to filter Checks to delete.
+     * @example
+     * // Delete a few Checks
+     * const { count } = await prisma.checks.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     *
+     */
+    deleteMany<T extends checksDeleteManyArgs>(args?: Prisma.SelectSubset<T, checksDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>;
+    /**
+     * Update zero or more Checks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {checksUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Checks
+     * const checks = await prisma.checks.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     *
+     */
+    updateMany<T extends checksUpdateManyArgs>(args: Prisma.SelectSubset<T, checksUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>;
+    /**
+     * Update zero or more Checks and returns the data updated in the database.
+     * @param {checksUpdateManyAndReturnArgs} args - Arguments to update many Checks.
+     * @example
+     * // Update many Checks
+     * const checks = await prisma.checks.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *
+     * // Update zero or more Checks and only return the `id`
+     * const checksWithIdOnly = await prisma.checks.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     *
+     */
+    updateManyAndReturn<T extends checksUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, checksUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>;
+    /**
+     * Create or update one Checks.
+     * @param {checksUpsertArgs} args - Arguments to update or create a Checks.
+     * @example
+     * // Update or create a Checks
+     * const checks = await prisma.checks.upsert({
+     *   create: {
+     *     // ... data to create a Checks
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Checks we want to update
+     *   }
+     * })
+     */
+    upsert<T extends checksUpsertArgs>(args: Prisma.SelectSubset<T, checksUpsertArgs<ExtArgs>>): Prisma.Prisma__checksClient<runtime.Types.Result.GetResult<Prisma.$checksPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Count the number of Checks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {checksCountArgs} args - Arguments to filter Checks to count.
+     * @example
+     * // Count the number of Checks
+     * const count = await prisma.checks.count({
+     *   where: {
+     *     // ... the filter for the Checks we want to count
+     *   }
+     * })
+    **/
+    count<T extends checksCountArgs>(args?: Prisma.Subset<T, checksCountArgs>): Prisma.PrismaPromise<T extends runtime.Types.Utils.Record<'select', any> ? T['select'] extends true ? number : Prisma.GetScalarType<T['select'], ChecksCountAggregateOutputType> : number>;
+    /**
+     * Allows you to perform aggregations operations on a Checks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ChecksAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ChecksAggregateArgs>(args: Prisma.Subset<T, ChecksAggregateArgs>): Prisma.PrismaPromise<GetChecksAggregateType<T>>;
+    /**
+     * Group by Checks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {checksGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     *
+    **/
+    groupBy<T extends checksGroupByArgs, HasSelectOrTake extends Prisma.Or<Prisma.Extends<'skip', Prisma.Keys<T>>, Prisma.Extends<'take', Prisma.Keys<T>>>, OrderByArg extends Prisma.True extends HasSelectOrTake ? {
+        orderBy: checksGroupByArgs['orderBy'];
+    } : {
+        orderBy?: checksGroupByArgs['orderBy'];
+    }, OrderFields extends Prisma.ExcludeUnderscoreKeys<Prisma.Keys<Prisma.MaybeTupleToUnion<T['orderBy']>>>, ByFields extends Prisma.MaybeTupleToUnion<T['by']>, ByValid extends Prisma.Has<ByFields, OrderFields>, HavingFields extends Prisma.GetHavingFields<T['having']>, HavingValid extends Prisma.Has<ByFields, HavingFields>, ByEmpty extends T['by'] extends never[] ? Prisma.True : Prisma.False, InputErrors extends ByEmpty extends Prisma.True ? `Error: "by" must not be empty.` : HavingValid extends Prisma.False ? {
+        [P in HavingFields]: P extends ByFields ? never : P extends string ? `Error: Field "${P}" used in "having" needs to be provided in "by".` : [
+            Error,
+            'Field ',
+            P,
+            ` in "having" needs to be provided in "by"`
+        ];
+    }[HavingFields] : 'take' extends Prisma.Keys<T> ? 'orderBy' extends Prisma.Keys<T> ? ByValid extends Prisma.True ? {} : {
+        [P in OrderFields]: P extends ByFields ? never : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+    }[OrderFields] : 'Error: If you provide "take", you also need to provide "orderBy"' : 'skip' extends Prisma.Keys<T> ? 'orderBy' extends Prisma.Keys<T> ? ByValid extends Prisma.True ? {} : {
+        [P in OrderFields]: P extends ByFields ? never : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+    }[OrderFields] : 'Error: If you provide "skip", you also need to provide "orderBy"' : ByValid extends Prisma.True ? {} : {
+        [P in OrderFields]: P extends ByFields ? never : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`;
+    }[OrderFields]>(args: Prisma.SubsetIntersection<T, checksGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetChecksGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>;
+    /**
+     * Fields of the checks model
+     */
+    readonly fields: checksFieldRefs;
+}
+/**
+ * The delegate class that acts as a "Promise-like" for checks.
+ * Why is this prefixed with `Prisma__`?
+ * Because we want to prevent naming conflicts as mentioned in
+ * https://github.com/prisma/prisma-client-js/issues/707
+ */
+export interface Prisma__checksClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise";
+    website<T extends Prisma.WebsiteDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WebsiteDefaultArgs<ExtArgs>>): Prisma.Prisma__WebsiteClient<runtime.Types.Result.GetResult<Prisma.$WebsitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
+    user<T extends Prisma.usersDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.usersDefaultArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): runtime.Types.Utils.JsPromise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): runtime.Types.Utils.JsPromise<T>;
+}
+/**
+ * Fields of the checks model
+ */
+export interface checksFieldRefs {
+    readonly id: Prisma.FieldRef<"checks", 'String'>;
+    readonly website_id: Prisma.FieldRef<"checks", 'String'>;
+    readonly userId: Prisma.FieldRef<"checks", 'String'>;
+    readonly status_code: Prisma.FieldRef<"checks", 'Int'>;
+    readonly response_time: Prisma.FieldRef<"checks", 'Int'>;
+    readonly status: Prisma.FieldRef<"checks", 'status'>;
+    readonly created_at: Prisma.FieldRef<"checks", 'DateTime'>;
+    readonly reigon: Prisma.FieldRef<"checks", 'reigon'>;
+}
+/**
+ * checks findUnique
+ */
+export type checksFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * Filter, which checks to fetch.
+     */
+    where: Prisma.checksWhereUniqueInput;
+};
+/**
+ * checks findUniqueOrThrow
+ */
+export type checksFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * Filter, which checks to fetch.
+     */
+    where: Prisma.checksWhereUniqueInput;
+};
+/**
+ * checks findFirst
+ */
+export type checksFindFirstArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * Filter, which checks to fetch.
+     */
+    where?: Prisma.checksWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of checks to fetch.
+     */
+    orderBy?: Prisma.checksOrderByWithRelationInput | Prisma.checksOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for searching for checks.
+     */
+    cursor?: Prisma.checksWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` checks from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` checks.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     *
+     * Filter by unique combinations of checks.
+     */
+    distinct?: Prisma.ChecksScalarFieldEnum | Prisma.ChecksScalarFieldEnum[];
+};
+/**
+ * checks findFirstOrThrow
+ */
+export type checksFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * Filter, which checks to fetch.
+     */
+    where?: Prisma.checksWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of checks to fetch.
+     */
+    orderBy?: Prisma.checksOrderByWithRelationInput | Prisma.checksOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for searching for checks.
+     */
+    cursor?: Prisma.checksWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` checks from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` checks.
+     */
+    skip?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     *
+     * Filter by unique combinations of checks.
+     */
+    distinct?: Prisma.ChecksScalarFieldEnum | Prisma.ChecksScalarFieldEnum[];
+};
+/**
+ * checks findMany
+ */
+export type checksFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * Filter, which checks to fetch.
+     */
+    where?: Prisma.checksWhereInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     *
+     * Determine the order of checks to fetch.
+     */
+    orderBy?: Prisma.checksOrderByWithRelationInput | Prisma.checksOrderByWithRelationInput[];
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     *
+     * Sets the position for listing checks.
+     */
+    cursor?: Prisma.checksWhereUniqueInput;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Take `±n` checks from the position of the cursor.
+     */
+    take?: number;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     *
+     * Skip the first `n` checks.
+     */
+    skip?: number;
+    distinct?: Prisma.ChecksScalarFieldEnum | Prisma.ChecksScalarFieldEnum[];
+};
+/**
+ * checks create
+ */
+export type checksCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * The data needed to create a checks.
+     */
+    data: Prisma.XOR<Prisma.checksCreateInput, Prisma.checksUncheckedCreateInput>;
+};
+/**
+ * checks createMany
+ */
+export type checksCreateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many checks.
+     */
+    data: Prisma.checksCreateManyInput | Prisma.checksCreateManyInput[];
+    skipDuplicates?: boolean;
+};
+/**
+ * checks createManyAndReturn
+ */
+export type checksCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelectCreateManyAndReturn<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * The data used to create many checks.
+     */
+    data: Prisma.checksCreateManyInput | Prisma.checksCreateManyInput[];
+    skipDuplicates?: boolean;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksIncludeCreateManyAndReturn<ExtArgs> | null;
+};
+/**
+ * checks update
+ */
+export type checksUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * The data needed to update a checks.
+     */
+    data: Prisma.XOR<Prisma.checksUpdateInput, Prisma.checksUncheckedUpdateInput>;
+    /**
+     * Choose, which checks to update.
+     */
+    where: Prisma.checksWhereUniqueInput;
+};
+/**
+ * checks updateMany
+ */
+export type checksUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * The data used to update checks.
+     */
+    data: Prisma.XOR<Prisma.checksUpdateManyMutationInput, Prisma.checksUncheckedUpdateManyInput>;
+    /**
+     * Filter which checks to update
+     */
+    where?: Prisma.checksWhereInput;
+    /**
+     * Limit how many checks to update.
+     */
+    limit?: number;
+};
+/**
+ * checks updateManyAndReturn
+ */
+export type checksUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelectUpdateManyAndReturn<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * The data used to update checks.
+     */
+    data: Prisma.XOR<Prisma.checksUpdateManyMutationInput, Prisma.checksUncheckedUpdateManyInput>;
+    /**
+     * Filter which checks to update
+     */
+    where?: Prisma.checksWhereInput;
+    /**
+     * Limit how many checks to update.
+     */
+    limit?: number;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksIncludeUpdateManyAndReturn<ExtArgs> | null;
+};
+/**
+ * checks upsert
+ */
+export type checksUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * The filter to search for the checks to update in case it exists.
+     */
+    where: Prisma.checksWhereUniqueInput;
+    /**
+     * In case the checks found by the `where` argument doesn't exist, create a new checks with this data.
+     */
+    create: Prisma.XOR<Prisma.checksCreateInput, Prisma.checksUncheckedCreateInput>;
+    /**
+     * In case the checks was found with the provided `where` argument, update it with this data.
+     */
+    update: Prisma.XOR<Prisma.checksUpdateInput, Prisma.checksUncheckedUpdateInput>;
+};
+/**
+ * checks delete
+ */
+export type checksDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+    /**
+     * Filter which checks to delete.
+     */
+    where: Prisma.checksWhereUniqueInput;
+};
+/**
+ * checks deleteMany
+ */
+export type checksDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Filter which checks to delete
+     */
+    where?: Prisma.checksWhereInput;
+    /**
+     * Limit how many checks to delete.
+     */
+    limit?: number;
+};
+/**
+ * checks without action
+ */
+export type checksDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the checks
+     */
+    select?: Prisma.checksSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the checks
+     */
+    omit?: Prisma.checksOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.checksInclude<ExtArgs> | null;
+};
+export {};
+//# sourceMappingURL=checks.d.ts.map
