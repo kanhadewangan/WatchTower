@@ -36,6 +36,7 @@ const Nav = () => {
       </div>
 
       <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400 BodyFont">
+        <a href="/dashboard" className="hover:text-amber-500 transition-colors">Dashboard</a>
         <a href="#features" className="hover:text-amber-500 transition-colors">Features</a>
         <a href="#pricing" className="hover:text-amber-500 transition-colors">Pricing</a>
         <a href="#docs" className="hover:text-amber-500 transition-colors">Docs</a>
