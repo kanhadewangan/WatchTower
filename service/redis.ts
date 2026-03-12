@@ -3,7 +3,7 @@ dotenv.config();
 import { createClient } from 'redis';
 
 
-const envs:string = "redis://localhost:6379"
+const envs:string = process.env.REDIS_URL as string;
 if (!envs) {
   throw new Error('Redis_URL environment variable is not set');
 }

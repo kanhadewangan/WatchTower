@@ -6,7 +6,7 @@ export async function fetchData(websiteId: string, url: string, reigon: string) 
 
   try {
     const response = await axios.get(url, {
-      timeout: 5000,
+      timeout: 60000,
       validateStatus: () => true,
     });
 

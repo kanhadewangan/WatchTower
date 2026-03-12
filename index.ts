@@ -16,7 +16,7 @@ const app = express();
 
 console.log('Environment Variables:');
 console.log('DATABASE_URL:', process.env.DATABASE_URL);
-console.log('Redis_URL:', process.env.Redis_URL);
+console.log('Redis_URL:', process.env.REDIS_URL);
 // CORS configuration
 app.use(cors({
   origin: "*",

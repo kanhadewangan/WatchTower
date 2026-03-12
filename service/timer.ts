@@ -247,5 +247,5 @@ if (process.env.NODE_ENV !== "test") {
   setInterval(async () => {
     await flushLogsToDB();
     console.log("🧹 Flush cycle completed");
-  }, 60000);
+  }, 600000);// Flush every 10 minutes
 }
