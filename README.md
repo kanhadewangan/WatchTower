@@ -171,6 +171,9 @@ better/
 - EU_WEST_1 (Europe West)
 - AP_SOUTHEAST_1 (Asia Pacific Southeast)
 
+## If You want to Clone the repo 
+  git clone --branch feature <Url>
+
 ## License
 
 MIT
