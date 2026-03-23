@@ -47,10 +47,13 @@ const Login = () => {
       if (response.data?.user) {
         localStorage.setItem("user", JSON.stringify(response.data.user));
       }
-
-      navigate("/", {
+       if(localStorage.getItem("token")){
+      navigate("/dashboard", {
         state: { message: "Login successful!", type: "success" },
-      });
+      });}
+      else {
+        setError("Login failed. Please check your credentials.");
+      }
 
     } catch (error) {
       console.error("Login failed:", error.response ? error.response.data : error.message);
