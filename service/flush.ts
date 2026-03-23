@@ -19,23 +19,12 @@ export async function flushLogsToDB() {
         response_time: log.responseTime,
         status: log.status,
         userId: website?.userId || null,
-        reigon: log.reigon || "US_EAST_1",
+        region: log.region || "US_EAST_1",
         created_at: new Date(log.checkedAt),
       };
     })
     
   );
-  const metrics = logsWithUserId.map(logs =>({
-    status: logs.status,
-    response_time: logs.response_time,
-    website_id: logs.website_id
-  }))
-   const upCount = metrics.filter(m => m.status === "UP").length;
-   const totalCount = metrics.length;
-   const uptimePercentage = totalCount === 0 ? 0 : (upCount / totalCount) * 100;
-   if (uptimePercentage < 90) {
-    
-   }
   console.log(`🧹 Flushing ${logsWithUserId.length} checks to database`);
 
   if (logsWithUserId.length > 0) {

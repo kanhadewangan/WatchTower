@@ -1,25 +1,28 @@
 import dotenv from 'dotenv';
 dotenv.config({
-  path:'/home/kanha/WatchTower/.env'
+  path:'./.env'
   
 });
 
 import express from 'express';
 import cors from 'cors';
-import website from './controller/websites.js';
-import checks from './controller/checks.js';
-import { startFlushInterval } from './service/flush.js';
-import user from './controller/users.js';
-import { processEmails } from './service/emailWorker.js';
+import website from './controller/websites.ts';
+import checks from './controller/checks.ts';
+import { startFlushInterval } from './service/flush.ts';
+import user from './controller/users.ts';
+import { processEmails } from './service/emailWorker.ts';
 
 const app = express();
 
 console.log('Environment Variables:');
 console.log('DATABASE_URL:', process.env.DATABASE_URL);
-console.log('Redis_URL:', process.env.Redis_URL);
+console.log('Redis_URL:', process.env.REDIS_URL);
 // CORS configuration
 app.use(cors({
-  origin: "*",
+  origin: "http://localhost:5173", // Allow requests from this origin
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
+  credentials: true // Allow cookies and authentication headers
 }));
 
 app.use(express.json());

@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config({
-    path:'../../.env'
+    path:'./.env'
 });
 
  const transporter = nodemailer.createTransport({

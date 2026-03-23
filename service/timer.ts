@@ -244,8 +244,5 @@ export async function fetchAllChecks() {
 }
 
 if (process.env.NODE_ENV !== "test") {
-  setInterval(async () => {
-    await flushLogsToDB();
-    console.log("🧹 Flush cycle completed");
-  }, 60000);
+  console.log("🧹 Timer-based flush interval disabled (handled by flush.ts)");
 }

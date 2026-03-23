@@ -20,7 +20,7 @@ export async function fetchData(websiteId: string, url: string, reigon: string) 
       responseTime,
       status: isUp ? "UP" : "DOWN",
       checkedAt: Date.now(),
-      reigon: reigon || "US_EAST_1",
+      region: reigon || "US_EAST_1",
     };
 
     await client.rPush(
@@ -44,7 +44,7 @@ export async function fetchData(websiteId: string, url: string, reigon: string) 
       responseTime: Date.now() - start,
       status: "DOWN",
       checkedAt: Date.now(),
-      reigon: reigon || "US_EAST_1",
+      region: reigon || "US_EAST_1",
     };
 
     await client.rPush(

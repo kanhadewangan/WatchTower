@@ -8,24 +8,19 @@ import prisma from '../prisma/prisma.js';
 import  authenticateToken  from '../service/auth/auth.js';
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET
 
 
 
 
-// Middleware to authenticate user using JWT
 
 
 router.post('/add-check', authenticateToken, async (req, res) => {
-    const { websitename, reigon = "US_EAST_1" } = req.body;
-  if(!req.user){
-    throw new Error("User not authenticated");
-  }
+    const { websitename, region = "US_EAST_1" } = req.body;
   try {
     const websiteInfo = await prisma.website.findFirst({
       where: {
         name: websitename,
-        userId: req.user.userId,
+        userId: req.user!.userId,
       },
     });
 
@@ -37,7 +32,7 @@ router.post('/add-check', authenticateToken, async (req, res) => {
         startMonitoring(
             websiteInfo.id,   // already string
             websiteInfo.url,
-            reigon,
+            region,
             60000, // every 1 minute (milliseconds)
             req.user!.userEmail, // user email for alerts
             websiteInfo.name // website name for alerts
@@ -46,7 +41,7 @@ router.post('/add-check', authenticateToken, async (req, res) => {
 await queueEmailJob({
   to: req.user!.userEmail,
   subject: '✅ Website Monitoring Activated - ' + websiteInfo.name,
-  text: `Monitoring has been successfully initiated for your website "${websiteInfo.name}" in the "${reigon}" region. Alerts will be sent if any performance issues or anomalies are detected.`,
+  text: `Monitoring has been successfully initiated for your website "${websiteInfo.name}" in the "${region}" region. Alerts will be sent if any performance issues or anomalies are detected.`,
   html: `
     <!DOCTYPE html>
     <html lang="en">
@@ -106,7 +101,7 @@ await queueEmailJob({
             </div>
             <div class="info-row">
               <span class="label">Region:</span>
-              <span class="value">${reigon}</span>
+              <span class="value">${region}</span>
             </div>
             <div class="info-row">
               <span class="label">Check Interval:</span>
@@ -172,9 +167,10 @@ await queueEmailJob({
     </html>
   `
 });
-        return res.status(201).json({
+        res.status(201).json({
       message: "Monitoring started successfully",
     });
+    return;
 
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);

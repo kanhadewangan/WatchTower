@@ -1,12 +1,11 @@
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({
+  path: './.env'
+});
 import { createClient } from 'redis';
 
+const envs = process.env.REDIS_URL || 'redis://localhost:6379';
 
-const envs:string = "redis://localhost:6379"
-if (!envs) {
-  throw new Error('Redis_URL environment variable is not set');
-}
 const client = createClient({
    url: envs 
 });

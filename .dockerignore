@@ -1,0 +1,17 @@
+node_module
+build
+coverage
+
+*.log
+*.env
+.DS_Store
+.git
+.gitignore
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.bak
+*.tmp
+
