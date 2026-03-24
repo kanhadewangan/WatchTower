@@ -47,17 +47,17 @@ services:
       REDIS_URL: redis://cache:6379
     command: ./start.sh   
 
-  # frontend:
-  #   # image: kanhadewanagn/frontend:latest
-  #   build: 
-  #     context: .
-  #     dockerfile: Dockerfile.frontend
-  #   container_name: frontend-watch
-  #   restart: always
-  #   ports:
-  #     - "5173:5173"
-  #   depends_on:
-  #     - app
+  frontend:
+    # image: kanhadewanagn/frontend:latest
+    build: 
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: frontend-watch
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - app
 
       
 volumes:

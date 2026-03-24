@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watch-backend-deploy
+  namespace: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: watch-backend
+      templates: prod
+  template:
+    metadata:
+      labels:
+        app: watch-backend
+        templates: prod
+    spec:
+      containers:
+        - name: watch-backend
+          image: kanhadewanagn/watch_back:latest
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://testuser:testpassword@db:5432/testdb"
+            - name: redis_url
+              value: "redis://cache:6379"
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: watch-backend-service
+  namespace: backend  
+spec:
+    selector:
+      app: watch-backend
+      templates: prod
+    ports:
+      - protocol: TCP
+        port: 3000
+        targetPort: 3000
+    type: LoadBalancer
