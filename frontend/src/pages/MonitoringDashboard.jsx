@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import axios from "axios";
+import {lazy , suspense} from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LineChart,
@@ -261,7 +262,7 @@ const MonitoringDashboard = () => {
           </div>
         </div>
       </header>
-
+  
       <main className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         {/* Signal Overview Hero */}
         <section className="mb-12">

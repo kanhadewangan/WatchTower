@@ -10,6 +10,9 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [websites, setWebsites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState(
+    () => location.state?.message || ""
+  );
 
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -39,6 +42,14 @@ const Dashboard = () => {
       navigate("/login");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (!location.state?.message) return;
+
+    navigate(location.pathname, { replace: true, state: null });
+    const dismissMessage = window.setTimeout(() => setSuccessMessage(""), 4000);
+    return () => window.clearTimeout(dismissMessage);
+  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -82,6 +93,14 @@ const Dashboard = () => {
         setWebsites(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch websites:", error);
+        // Handle 403 (invalid/expired token) and 401 (unauthorized)
+        if (error.response?.status === 403 || error.response?.status === 401) {
+          console.warn("Token validation failed. Session expired or invalid. Redirecting to login...");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+          return;
+        }
         setWebsites([]);
       } finally {
         setLoading(false);
@@ -106,6 +125,13 @@ const Dashboard = () => {
         });
       } catch (error) {
         console.error("Failed to fetch metrics:", error);
+        // Handle token auth failures
+        if (error.response?.status === 403 || error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+          return;
+        }
       }
     };
 
@@ -115,7 +141,7 @@ const Dashboard = () => {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -146,36 +172,47 @@ const Dashboard = () => {
       setShowAddModal(false);
     } catch (error) {
       console.error("Failed to add monitor:", error);
+      // Handle token auth failures
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+        return;
+      }
       setAddError(error.response?.data?.message || "Failed to add monitor. Please try again.");
     } finally {
       setAddingMonitor(false);
     }
   };
 
-  const handleDeleteWebsite = async (e, websiteName) => {
+  const handleDeleteWebsite = async (e, website) => {
     e.stopPropagation(); // Prevent bubbling to parent onClick
   
-    if (!confirm(`Are you sure you want to delete "${websiteName}"? This cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete "${website.name}"? This cannot be undone.`)) {
       return;
     }
 
     try {
       await axios.delete(
-        `${import.meta.env.VITE_URL}/api/v1/websites/delete-websites`,
+        `${import.meta.env.VITE_URL}/api/v1/websites/delete-website/${website.id}`,
         {
-          data: { name: websiteName },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
       // Remove from UI
-      setWebsites((prev) => prev.filter((w) => w.name !== websiteName));
-      alert(`"${websiteName}" has been deleted.`);
-      // Navigate to dashboard after deletion
-      navigate('/dashboard');
+      setWebsites((prev) => prev.filter((item) => item.id !== website.id));
+      alert(`"${website.name}" has been deleted.`);
     } catch (error) {
       console.error("Failed to delete website:", error);
+      // Handle token auth failures
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+        return;
+      }
       alert(error.response?.data?.message || "Failed to delete website. Please try again.");
     }
   };
@@ -458,6 +495,29 @@ const Dashboard = () => {
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+          <AnimatePresence>
+            {successMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                role="status"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-green-500/30 bg-green-500/10 px-5 py-4 text-sm font-semibold text-green-300"
+              >
+                <span>{successMessage}</span>
+                <button
+                  type="button"
+                  onClick={() => setSuccessMessage("")}
+                  aria-label="Dismiss login confirmation"
+                  className="text-green-300/80 transition-colors hover:text-white"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {/* Stats Grid */}
           <motion.div
             variants={containerVariants}
@@ -559,7 +619,8 @@ const Dashboard = () => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDeleteWebsite(e, websiteName)}
+                          type="button"
+                          onClick={(event) => handleDeleteWebsite(event, website)}
                           className="p-3 bg-red-500/10 hover:bg-red-500 hover:text-white transition-all rounded-2xl border border-red-500/20 hover:border-red-500"
                           title="Delete website"
                         >

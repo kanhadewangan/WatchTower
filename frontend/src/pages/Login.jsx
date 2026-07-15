@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -39,21 +39,18 @@ const Login = () => {
           password: formData.password,
         }
       );
-
       if (response.data?.token) {
         localStorage.setItem("token", response.data.token);
+        navigate("/dashboard", {
+          replace: true,
+          state: { message: "Login successful!", type: "success" },
+        });
+      }
+      else {
+        setError(response.message || "Login failed. Please check your credentials.");
       }
 
-      if (response.data?.user) {
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-      }
-       if(localStorage.getItem("token")){
-      navigate("/dashboard", {
-        state: { message: "Login successful!", type: "success" },
-      });}
-      else {
-        setError("Login failed. Please check your credentials.");
-      }
+      
 
     } catch (error) {
       console.error("Login failed:", error.response ? error.response.data : error.message);
