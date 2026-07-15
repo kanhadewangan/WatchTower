@@ -39,18 +39,18 @@ const Login = () => {
           password: formData.password,
         }
       );
-      if (response.data?.token) {
-        localStorage.setItem("token", response.data.token);
-        navigate("/dashboard", {
-          replace: true,
-          state: { message: "Login successful!", type: "success" },
-        });
-      }
-      else {
-        setError(response.message || "Login failed. Please check your credentials.");
+      const token = response.data?.token;
+
+      if (typeof token !== "string" || !token.trim()) {
+        setError(response.data?.message || "Login failed. Please check your credentials.");
+        return;
       }
 
-      
+      localStorage.setItem("token", token);
+      navigate("/dashboard", {
+        replace: true,
+        state: { message: "Login successful!", type: "success" },
+      });
 
     } catch (error) {
       console.error("Login failed:", error.response ? error.response.data : error.message);
