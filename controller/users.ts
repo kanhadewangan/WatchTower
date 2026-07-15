@@ -68,6 +68,10 @@ router.get('/profile', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
+    if(!email || !password){
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+    
     try {
         const user = await prisma.users.findFirst({
             where: {
@@ -75,13 +79,15 @@ router.post('/login', async (req, res) => {
                 password
             }
         });
-        if (user) {
-            const token = jwt.sign({ userId: user.id, userEmail: user.email }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
-            res.json({ message: 'Login successful', "token": token });
-        } else {
-            
-            res.status(401).json({ message: 'Invalid credentials' });
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid email or password' });
         }
+        if (!JWT_SECRET) {
+            return res.status(500).json({ message: 'JWT secret not configured on server' });
+        }
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+        res.status(200).json({ message: 'Login successful', data: { id: user.id, userEmail: user.email, name: user.name }, token     });
+        
     } catch (error) {
         console.log(error)
         res.status(500).json({ message: 'Internal server error' });

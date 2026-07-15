@@ -49,5 +49,5 @@ export function startFlushInterval() {
     } catch (error) {
       console.error("Error flushing logs:", error);
     } 
-  }, 60000); // every 1 minute
+  }, 600000); // every  10 minutes
 }

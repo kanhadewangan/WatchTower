@@ -6,11 +6,11 @@ dotenv.config({
 
 import express from 'express';
 import cors from 'cors';
-import website from './controller/websites.ts';
-import checks from './controller/checks.ts';
-import { startFlushInterval } from './service/flush.ts';
-import user from './controller/users.ts';
-import { processEmails } from './service/emailWorker.ts';
+import website from '../controller/websites.ts';
+import checks from '../controller/checks.ts';
+import { startFlushInterval } from '../service/flush.ts';
+import user from '../controller/users.ts';
+import { processEmails } from '../service/emailWorker.ts';
 
 const app = express();
 
@@ -44,8 +44,3 @@ processEmails();
 
 export default app;
 
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(3000, () => {
-    console.log('Server is running on port 3000');
-  });
-}

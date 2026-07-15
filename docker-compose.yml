@@ -26,38 +26,39 @@ services:
     restart: always
     ports:
       - "6379:6379"
-  app:
-    env_file:
-      - .env
-    # image: kanhadewanagn/watch_back:latest
-    build: 
-      context: .
-      dockerfile: Dockerfile.backend
-    container_name: watch_back
-    restart: always
-    ports:
-      - "3000:3000"
-    depends_on:
-        db: 
-            condition: service_healthy
-        cache:
-            condition: service_started
-    environment:
-      DATABASE_URL: postgresql://testuser:testpassword@db:5432/testdb
-      REDIS_URL: redis://cache:6379
-    command: ./start.sh   
+  # app:
+  #   env_file:
+  #     - .env
+  #   # image: kanhadewanagn/watch_back:latest
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile.backend
+  #   container_name: watch_back
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+      
+  #   depends_on:
+  #       db: 
+  #           condition: service_healthy
+  #       cache:
+  #           condition: service_started
+  #   environment:
+  #     DATABASE_URL: postgresql://testuser:testpassword@db:5432/testdb
+  #     REDIS_URL: redis://cache:6379
+  #   command: ./start.sh   
 
-  frontend:
-    # image: kanhadewanagn/frontend:latest
-    build: 
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: frontend-watch
-    restart: always
-    ports:
-      - "5173:5173"
-    depends_on:
-      - app
+  # frontend:
+  #   # image: kanhadewanagn/frontend:latest
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile.frontend
+  #   container_name: frontend-watch
+  #   restart: always
+  #   ports:
+  #     - "5173:5173"
+  #   depends_on:
+  #     - app
 
       
 volumes:

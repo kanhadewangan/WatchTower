@@ -1,0 +1,28 @@
+name: AWS_Deployment
+
+on :
+   push:
+      branches: [feature]
+
+
+jobs:
+   deploy:
+      runs-on: ubuntu-latest
+      steps:
+          - name: checkout code
+            uses: actions/checkout@v2
+          - name: Configure AWS credentials
+            uses: aws-actions/configure-aws-credentials@v1
+            with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: ${{ secrets.AWS_REGION }}
+          - name: Deploy to AWS
+            run: |
+              # Add your deployment commands here, for example:
+              # aws eks update-kubeconfig --name your-cluster-name
+              # kubectl apply -f k8s/backend.yml
+              # kubectl apply -f k8s/frontend.yml
+              echo "Deployment commands would go here"
+               
+        

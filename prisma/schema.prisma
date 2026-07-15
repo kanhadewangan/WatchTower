@@ -21,13 +21,13 @@ model users{
   password String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  websites Website[]
+  websites Website[] 
   checks checks[]
 }
 
 
 model Website {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) 
   name      String
   url       String
   userId    String
