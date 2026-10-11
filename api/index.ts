@@ -1,8 +1,4 @@
-import dotenv from 'dotenv';
-dotenv.config({
-  path:'./.env'
-  
-});
+import './env.ts';
 
 import express from 'express';
 import cors from 'cors';
@@ -40,7 +36,10 @@ app.get('/api/v1/status', (req, res) => {
 });
 // Start the flush worker to persist checks to database
 startFlushInterval();
+// Start the email worker to process emails
 processEmails();
 
-export default app;
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`Server is running on port ${process.env.PORT || 3000}`);
+})
 

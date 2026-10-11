@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ProtectedRoute } from "./hooks/IsAuthenticate";
@@ -8,18 +7,12 @@ import MonitoringDashboard from "./pages/MonitoringDashboard";
 import Hero from "./pages/Hero";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Legal from "./pages/Legal";
 
 // Create QueryClient instance
 const queryClient = new QueryClient();
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsAuthenticated(!!token);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -27,32 +20,23 @@ function App() {
           <Route path="/" element={<Hero />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/terms" element={<Legal page="terms" />} />
+          <Route path="/privacy" element={<Legal page="privacy" />} />
+          <Route path="/security" element={<Legal page="security" />} />
 
           <Route
             path="/dashboard"
-            element={
-              localStorage.getItem("token")
-                ? <Dashboard />
-                : <Navigate to="/login" replace />
-            }
+            element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
           />
 
           <Route
             path="/monitor"
-            element={
-              localStorage.getItem("token")
-                ? <Monitoring />
-                : <Navigate to="/login" replace />
-            }
+            element={<ProtectedRoute><Monitoring /></ProtectedRoute>}
           />
 
           <Route
             path="/monitor/:websitename"
-            element={
-              localStorage.getItem("token")
-                ? <MonitoringDashboard />
-                : <Navigate to="/login" replace />
-            }
+            element={<ProtectedRoute><MonitoringDashboard /></ProtectedRoute>}
           />
 
           <Route path="*" element={<Navigate to="/" replace />} />

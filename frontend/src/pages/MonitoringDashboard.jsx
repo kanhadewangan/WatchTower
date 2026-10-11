@@ -18,11 +18,13 @@ import {
   ReferenceLine
 } from "recharts";
 import { useCustomQuery } from "../hooks/useQuery";
+import Sidebar from "../components/Sidebar";
 
 const MonitoringDashboard = () => {
   const navigate = useNavigate();
   const { websitename } = useParams();
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -193,29 +195,35 @@ const MonitoringDashboard = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center flex-col space-y-4">
-        <h2 className="text-red-500 text-2xl font-black HeadingFont uppercase tracking-widest">{error}</h2>
-        <button onClick={() => navigate('/monitor')} className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg HeadingFont transition-colors text-sm">Return to Monitor</button>
+      <div className="h-screen bg-[#0a0a0f] flex">
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className="flex-1 min-w-0 flex items-center justify-center flex-col space-y-4">
+          <h2 className="text-red-500 text-2xl font-black HeadingFont uppercase tracking-widest">{error}</h2>
+          <button onClick={() => navigate('/monitor')} className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg HeadingFont transition-colors text-sm">Return to Monitor</button>
+        </div>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
-            <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      <div className="h-screen bg-[#0a0a0f] flex">
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className="flex-1 min-w-0 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
+              <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-amber-500 HeadingFont uppercase tracking-widest text-xs animate-pulse">Decrypting Signal...</p>
           </div>
-          <p className="text-amber-500 HeadingFont uppercase tracking-widest text-xs animate-pulse">Decrypting Signal...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-x-hidden relative">
+    <div className="h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-hidden flex relative">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
         .HeadingFont { font-family: 'Space Grotesk', sans-serif; }
@@ -231,10 +239,21 @@ const MonitoringDashboard = () => {
 
       <div className="absolute inset-0 hex-grid pointer-events-none opacity-50" />
 
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden relative z-10">
       {/* Navigation Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4">
+      <header className="sticky top-0 z-30 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-6">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-xl hover:bg-white/5 text-gray-500 transition lg:hidden"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <motion.div
               whileHover={{ scale: 1.05 }}
               onClick={() => navigate("/monitor")}
@@ -554,6 +573,7 @@ const MonitoringDashboard = () => {
           System Uptime Registry • Core Engine v4.2.0
         </p>
       </footer>
+      </div>
     </div>
   );
 

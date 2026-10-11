@@ -13,4 +13,4 @@ echo "Running migrations..."
 bunx prisma migrate deploy
 
 echo "Starting app..."
-exec bun run index.ts
+exec bun run api/index.ts

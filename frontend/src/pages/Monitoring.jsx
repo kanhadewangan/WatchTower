@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import Sidebar from '../components/Sidebar';
 
 export const Monitoring = () => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export const Monitoring = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -142,20 +144,23 @@ export const Monitoring = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
-            <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      <div className="h-screen bg-[#0a0a0f] flex">
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className="flex-1 min-w-0 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
+              <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-amber-500 HeadingFont uppercase tracking-widest text-xs animate-pulse">Initializing Surveillance...</p>
           </div>
-          <p className="text-amber-500 HeadingFont uppercase tracking-widest text-xs animate-pulse">Initializing Surveillance...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-x-hidden relative">
+    <div className="h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-hidden flex relative">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
         .HeadingFont { font-family: 'Space Grotesk', sans-serif; }
@@ -172,11 +177,22 @@ export const Monitoring = () => {
       <div className="absolute inset-0 hex-grid pointer-events-none opacity-50" />
       <div className="absolute top-0 right-0 w-[500px] h-[500px] animated-glow pointer-events-none opacity-30" />
 
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden relative z-10">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
+      <header className="sticky top-0 z-30 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 rounded-xl hover:bg-white/5 text-gray-500 transition lg:hidden"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
               <div
                 className="flex items-center gap-2 cursor-pointer group"
                 onClick={() => navigate("/")}
@@ -393,6 +409,7 @@ export const Monitoring = () => {
           Satellite Monitoring Network v2.4.0
         </p>
       </footer>
+      </div>
     </div>
   );
 };
