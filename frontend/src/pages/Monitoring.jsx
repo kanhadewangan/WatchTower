@@ -236,10 +236,10 @@ export const Monitoring = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <main className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-12 relative z-10">
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
           {[
             { label: 'Total Monitors', value: statusCounts.all, color: 'text-white' },
             { label: 'Operational', value: statusCounts.up, color: 'text-green-500' },
@@ -251,7 +251,7 @@ export const Monitoring = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-[#111118]/60 border border-white/5 p-4 rounded-2xl"
+              className="bg-[#111118]/60 border border-white/5 p-6 rounded-2xl"
             >
               <div className={`text-2xl font-black HeadingFont ${stat.color}`}>{String(stat.value).padStart(2, '0')}</div>
               <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 HeadingFont">{stat.label}</div>
@@ -260,7 +260,7 @@ export const Monitoring = () => {
         </div>
 
         {/* Global Controls */}
-        <div className="bg-[#111118]/40 border border-white/5 p-2 rounded-2xl mb-8 flex flex-col lg:row gap-2">
+        <div className="bg-[#111118]/40 border border-white/5 p-3 rounded-2xl mb-10 flex flex-col lg:row gap-3">
           <div className="flex flex-col md:flex-row gap-2 grow">
             {/* Search Input */}
             <div className="relative grow group">
@@ -327,7 +327,7 @@ export const Monitoring = () => {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
               {filteredWebsites.map((website) => {
                 const metrics = websiteMetrics[website.name] || {};
@@ -338,7 +338,7 @@ export const Monitoring = () => {
                     layout
                     whileHover={{ y: -5, borderColor: "rgba(245, 158, 11, 0.3)" }}
                     className="bg-[#111118]/80 border border-white/5 p-6 rounded-3xl transition-all cursor-pointer relative group overflow-hidden"
-                    onClick={() => navigate(`/monitor/${website.name}`)}
+                    onClick={() => navigate(`/monitor/${encodeURIComponent(website.name)}`)}
                   >
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
                       <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>

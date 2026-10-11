@@ -125,7 +125,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-8 px-4 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        <nav className="flex-1 py-8 px-4 space-y-3 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {navItems.map((item) => {
             const isActive =
               location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
@@ -156,7 +156,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         {/* User Section */}
         <div className="p-6 border-t border-white/5 bg-[#0a0a0f]/40">
           <div className={`flex items-center gap-4 ${!sidebarOpen ? "lg:justify-center" : ""}`}>
-            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-amber-500 text-xl font-black HeadingFont shrink-0 shadow-inner">
+            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-amber-500 text-base font-black HeadingFont shrink-0 shadow-inner">
               {user?.name?.charAt(0) || "U"}
             </div>
             <div className={`flex-1 min-w-0 transition-opacity duration-300 ${!sidebarOpen ? "lg:opacity-0 lg:w-0" : "opacity-100"}`}>

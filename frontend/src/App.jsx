@@ -8,6 +8,7 @@ import Hero from "./pages/Hero";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Legal from "./pages/Legal";
+import IncidentLog from "./pages/IncidentLog";
 
 // Create QueryClient instance
 const queryClient = new QueryClient();
@@ -27,6 +28,11 @@ function App() {
           <Route
             path="/dashboard"
             element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
+          />
+
+          <Route
+            path="/incidents"
+            element={<ProtectedRoute><IncidentLog /></ProtectedRoute>}
           />
 
           <Route
