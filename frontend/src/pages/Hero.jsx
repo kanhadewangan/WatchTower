@@ -1,80 +1,98 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "framer-motion";
 
-const StatusDot = () => (
-  <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
-    <span className="relative flex h-2 w-2">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-    </span>
-    <span className="text-[10px] font-medium uppercase tracking-widest text-amber-500/80 BodyFont">
-      All Systems Operational
-    </span>
-  </div>
+const NAV_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "How it works", href: "#how" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "FAQ", href: "#faq" },
+];
+
+const Logo = ({ className = "w-8 h-8" }) => (
+  <svg className={`${className} text-amber-500`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 4.5l-7.5 15h15L12 4.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+    <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
 );
 
 const Nav = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-6 py-4 bg-[#0a0a0f]/80 backdrop-blur-md border-b border-white/5"
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+        scrolled ? "bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5" : "bg-transparent border-b border-transparent"
+      }`}
     >
-      <div className="flex items-center gap-4 sm:gap-6">
+      <div className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-4">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-          <svg className="w-8 h-8 text-amber-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 4.5l-7.5 15h15L12 4.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-            <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span className="text-xl font-bold tracking-tight text-white HeadingFont">Watchtower</span>
+          <Logo />
+          <span className="text-xl font-bold tracking-tight HeadingFont">Watchtower</span>
         </div>
-        <StatusDot />
-      </div>
 
-      {/* Desktop Links */}
-      <div className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-gray-400 BodyFont">
-        <a href="/dashboard" className="hover:text-amber-500 transition-colors">Dashboard</a>
-        <a href="#features" className="hover:text-amber-500 transition-colors">Features</a>
-        <a href="#pricing" className="hover:text-amber-500 transition-colors">Pricing</a>
-        <a href="#docs" className="hover:text-amber-500 transition-colors">Docs</a>
-      </div>
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400 BodyFont">
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href} className="hover:text-white transition-colors">
+              {l.label}
+            </a>
+          ))}
+        </div>
 
-      {/* Hamburger Icon */}
-      <button
-        className="md:hidden flex flex-col justify-center items-center ml-4"
-        onClick={() => setMenuOpen(!menuOpen)}
-        aria-label="Toggle menu"
-      >
-        <span className="block w-6 h-0.5 bg-amber-500 mb-1"></span>
-        <span className="block w-6 h-0.5 bg-amber-500 mb-1"></span>
-        <span className="block w-6 h-0.5 bg-amber-500"></span>
-      </button>
-
-      {/* Desktop Button */}
-      <motion.button
-        whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(245, 158, 11, 0.4)" }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => navigate("/signup")}
-        className="hidden md:block px-5 py-2 text-sm font-bold text-amber-500 border border-amber-500/50 rounded-lg hover:bg-amber-500/10 transition-all HeadingFont"
-      >
-        Start Watching
-      </motion.button>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="absolute top-full right-4 mt-2 w-48 bg-[#18181f] border border-white/10 rounded-xl shadow-lg flex flex-col items-stretch z-50 md:hidden">
-          <a href="/dashboard" className="px-6 py-3 text-sm text-gray-200 hover:text-amber-500 transition-colors">Dashboard</a>
-          <a href="#features" className="px-6 py-3 text-sm text-gray-200 hover:text-amber-500 transition-colors">Features</a>
-          <a href="#pricing" className="px-6 py-3 text-sm text-gray-200 hover:text-amber-500 transition-colors">Pricing</a>
-          <a href="#docs" className="px-6 py-3 text-sm text-gray-200 hover:text-amber-500 transition-colors">Docs</a>
+        <div className="hidden md:flex items-center gap-3">
           <button
-            onClick={() => { setMenuOpen(false); navigate("/signup"); }}
-            className="m-3 px-5 py-2 text-sm font-bold text-amber-500 border border-amber-500/50 rounded-lg hover:bg-amber-500/10 transition-all HeadingFont"
+            onClick={() => navigate("/login")}
+            className="px-4 py-2 text-sm font-semibold text-gray-300 hover:text-white transition-colors HeadingFont"
           >
+            Sign in
+          </button>
+          <motion.button
+            whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(245, 158, 11, 0.45)" }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => navigate("/signup")}
+            className="px-5 py-2 text-sm font-bold bg-amber-500 text-black rounded-xl HeadingFont"
+          >
+            Start Watching
+          </motion.button>
+        </div>
+
+        <button
+          className="md:hidden p-2 text-amber-500"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+          </svg>
+        </button>
+      </div>
+
+      <motion.div style={{ scaleX: progress }} className="absolute bottom-0 inset-x-0 h-px origin-left bg-gradient-to-r from-amber-500 to-orange-500" />
+
+      {menuOpen && (
+        <div className="md:hidden mx-4 mb-4 p-2 bg-[#111118]/95 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col">
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="px-4 py-3 text-sm text-gray-200 hover:text-amber-500 transition-colors">
+              {l.label}
+            </a>
+          ))}
+          <button onClick={() => navigate("/login")} className="px-4 py-3 text-left text-sm text-gray-200 hover:text-amber-500 transition-colors">
+            Sign in
+          </button>
+          <button onClick={() => navigate("/signup")} className="m-2 px-5 py-3 text-sm font-bold bg-amber-500 text-black rounded-xl HeadingFont">
             Start Watching
           </button>
         </div>
@@ -83,384 +101,483 @@ const Nav = () => {
   );
 };
 
-const Counter = ({ value, duration = 2 }) => {
-  const [count, setCount] = useState(0);
+// Card with a soft spotlight that follows the cursor.
+const SpotlightCard = ({ children, className = "", ...rest }) => {
+  const ref = useRef(null);
+  const onMove = (e) => {
+    const r = ref.current.getBoundingClientRect();
+    ref.current.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    ref.current.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+  return (
+    <motion.div ref={ref} onMouseMove={onMove} className={`spotlight ${className}`} {...rest}>
+      {children}
+    </motion.div>
+  );
+};
 
-  useEffect(() => {
-    let start = 0;
-    const end = parseFloat(value.replace(/[^0-9.]/g, ""));
-    if (start === end) return;
+const FAQS = [
+  { q: "What do I need to get started?", a: "Just an account and the URL of the site you want to watch. There's nothing to install." },
+  { q: "How will I know when my site is down?", a: "Watchtower sends you an email alert as soon as a check fails." },
+  { q: "Can I watch more than one site?", a: "Yes. Add as many sites as you like and each one gets its own monitor page." },
+  { q: "Where can I see the history?", a: "Every monitor has its own page with response-time charts and a log of recent checks." },
+];
 
-    let totalMiliseconds = duration * 1000;
-    let incrementTime = (totalMiliseconds / end) * (end > 100 ? 5 : 1);
+const FaqItem = ({ q, a }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-white/10">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between gap-4 py-5 text-left">
+        <span className="font-semibold HeadingFont text-lg">{q}</span>
+        <motion.span animate={{ rotate: open ? 45 : 0 }} className="text-amber-500 text-2xl leading-none shrink-0">+</motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <p className="pb-5 text-gray-400 BodyFont leading-relaxed">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
-    let timer = setInterval(() => {
-      start += (end > 100 ? 5 : 0.01);
-      if (start >= end) {
-        setCount(value);
-        clearInterval(timer);
-      } else {
-        setCount(value.includes('%') ? start.toFixed(2) + '%' : (value.includes('+') ? Math.floor(start) + 'M+' : Math.floor(start)));
-      }
-    }, incrementTime);
+// Illustrative sample data for the product mockup (not real measurements).
+const SAMPLE_LATENCY = [38, 42, 40, 36, 44, 41, 39, 47, 43, 40, 38, 45, 52, 61, 49, 42, 40, 37, 41, 44, 39, 38, 43, 41];
 
-    return () => clearInterval(timer);
-  }, [value, duration]);
+const ProductPreview = () => {
+  const w = 600;
+  const h = 160;
+  const max = 70;
+  const pts = SAMPLE_LATENCY.map((v, i) => [(i / (SAMPLE_LATENCY.length - 1)) * w, h - (v / max) * h]);
+  const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const area = `${line} L${w},${h} L0,${h} Z`;
 
-  return <span>{count}</span>;
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0d0d14] shadow-[0_30px_120px_rgba(245,158,11,0.12)] overflow-hidden">
+      <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/5 bg-white/[0.03]">
+        <span className="w-3 h-3 rounded-full bg-red-500/60" />
+        <span className="w-3 h-3 rounded-full bg-amber-500/60" />
+        <span className="w-3 h-3 rounded-full bg-green-500/60" />
+        <span className="ml-4 text-[11px] text-gray-500 font-mono truncate">watchtower / monitor / example.com</span>
+        <span className="ml-auto text-[10px] uppercase tracking-widest text-gray-600 BodyFont hidden sm:block">Sample view</span>
+      </div>
+
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {[
+            { k: "Status", v: "Up", c: "text-green-400" },
+            { k: "Uptime", v: "—", c: "text-white" },
+            { k: "Response", v: "— ms", c: "text-white" },
+            { k: "Last check", v: "just now", c: "text-white" },
+          ].map((s) => (
+            <div key={s.k} className="p-3 sm:p-4 rounded-xl bg-white/[0.03] border border-white/5">
+              <div className="text-[10px] uppercase tracking-widest text-gray-500 BodyFont">{s.k}</div>
+              <div className={`mt-2 text-lg sm:text-xl font-bold HeadingFont ${s.c}`}>{s.v}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
+          <div className="flex justify-between text-[10px] uppercase tracking-widest text-gray-500 mb-3 BodyFont">
+            <span>Response time</span>
+            <span>Last 24 checks</span>
+          </div>
+          <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-32 sm:h-40" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="lat" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d={area} fill="url(#lat)" />
+            <motion.path
+              d={line}
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 2, ease: "easeInOut", delay: 0.6 }}
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        </div>
+
+        <div className="flex gap-[3px]">
+          {Array.from({ length: 48 }).map((_, i) => (
+            <span key={i} className={`flex-1 h-6 rounded-sm ${i === 31 ? "bg-red-500/70" : "bg-green-500/50"}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Icon = ({ d }) => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={d} />
+  </svg>
+);
+
+const FEATURES = [
+  {
+    title: "Real-time monitoring",
+    desc: "Continuous uptime and response-time checks on every endpoint you add.",
+    icon: "M3 12h4l3-8 4 16 3-8h4",
+    span: "md:col-span-2",
+  },
+  {
+    title: "Instant email alerts",
+    desc: "Get notified the moment a site goes down.",
+    icon: "M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z",
+    span: "",
+  },
+  {
+    title: "Detailed charts & logs",
+    desc: "Drill into any monitor to see latency trends and every check that ran.",
+    icon: "M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z",
+    span: "",
+  },
+  {
+    title: "Add a site in seconds",
+    desc: "Paste a URL, name it, and Watchtower starts watching. No agents, no config files.",
+    icon: "M12 4v16m8-8H4",
+    span: "md:col-span-2",
+  },
+];
+
+const STEPS = [
+  { n: "01", title: "Add your site", desc: "Give your website a name and a URL." },
+  { n: "02", title: "We keep watching", desc: "Checks run continuously and results are stored for you." },
+  { n: "03", title: "Get alerted", desc: "If something breaks, you hear about it by email first." },
+];
+
+const FREE_FEATURES = [
+  "Uptime and response-time checks",
+  "Email alerts when a site goes down",
+  "Charts and a log for every monitor",
+  "Add your sites in seconds",
+];
+
+const fadeUp = {
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-80px" },
+  transition: { duration: 0.7, ease: "easeOut" },
 };
 
 const Hero = () => {
   const navigate = useNavigate();
+  const { scrollY } = useScroll();
+  const glowY = useTransform(scrollY, [0, 600], [0, 120]);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      navigate("/");
-    }
-    else {
+    if (localStorage.getItem("token")) {
       navigate("/dashboard");
     }
   }, [navigate]);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 40, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: "easeOut" } },
-  };
-
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-x-hidden relative">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        html { scroll-behavior: smooth; }
+        a:focus-visible, button:focus-visible { outline: 2px solid #f59e0b; outline-offset: 3px; border-radius: 8px; }
         .HeadingFont { font-family: 'Space Grotesk', sans-serif; }
         .BodyFont { font-family: 'Inter', sans-serif; }
-        .hex-grid {
-          background-image: radial-gradient(circle at 2px 2px, rgba(245, 158, 11, 0.05) 1px, transparent 0);
-          background-size: 32px 32px;
-        }
-        .animated-glow {
-          background: radial-gradient(circle at center, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+        .grid-fade {
+          background-image:
+            linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+          background-size: 56px 56px;
+          mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 30%, transparent 75%);
+          -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 30%, transparent 75%);
         }
         .text-gradient {
-          background: linear-gradient(to right, #f59e0b, #fb923c);
+          background: linear-gradient(100deg, #fbbf24 0%, #f59e0b 40%, #fb923c 100%);
           -webkit-background-clip: text;
+          background-clip: text;
           -webkit-text-fill-color: transparent;
         }
+        .spotlight { position: relative; }
+        .spotlight::before {
+          content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+          background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(245,158,11,0.14), transparent 60%);
+          opacity: 0; transition: opacity .3s;
+        }
+        .spotlight:hover::before { opacity: 1; }
+        .noise {
+          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.5'/></svg>");
+          mix-blend-mode: overlay;
+        }
+        .shimmer { position: relative; overflow: hidden; }
+        .shimmer::after {
+          content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+          background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.45) 50%, transparent 70%);
+          animation: shimmer 3.5s ease-in-out infinite;
+        }
+        @keyframes shimmer { 60%, 100% { transform: translateX(100%); } }
+        @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .floaty { animation: floaty 6s ease-in-out infinite; }
+        @keyframes aurora {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(40px, -30px) scale(1.15); }
+        }
+        .aurora { animation: aurora 12s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .aurora, .shimmer::after, .floaty { animation: none; } html { scroll-behavior: auto; } }
       `}</style>
+
+      <div className="noise fixed inset-0 opacity-[0.035] pointer-events-none z-0" />
 
       <Nav />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-8 overflow-hidden">
-        <div className="absolute inset-0 hex-grid pointer-events-none opacity-50" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[800px] h-[500px] sm:h-[800px] animated-glow pointer-events-none" />
+      {/* Hero */}
+      <section className="relative pt-36 sm:pt-44 pb-16 px-4 sm:px-8">
+        <div className="absolute inset-x-0 top-0 h-[700px] grid-fade pointer-events-none" />
+        <motion.div style={{ y: glowY }} className="absolute inset-x-0 top-0 h-[600px] pointer-events-none overflow-hidden">
+          <div className="aurora absolute -top-40 left-1/2 -translate-x-[80%] w-[520px] h-[520px] rounded-full bg-amber-500/20 blur-[120px]" />
+          <div className="aurora absolute -top-24 left-1/2 -translate-x-[10%] w-[420px] h-[420px] rounded-full bg-orange-600/15 blur-[120px]" style={{ animationDelay: "-6s" }} />
+        </motion.div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="max-w-5xl mx-auto text-center relative z-10"
-        >
-          <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl md:text-7xl font-extrabold HeadingFont leading-tight mb-6">
-            Your Website Is <br />
-            Being <span className="text-gradient">Watched.</span>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full bg-white/5 border border-white/10 backdrop-blur"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+            </span>
+            <span className="text-xs text-gray-300 BodyFont">Website uptime monitoring, made simple</span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="text-4xl sm:text-6xl md:text-7xl font-bold HeadingFont leading-[1.05] tracking-tight mb-6"
+          >
+            Know when your site
+            <br />
+            goes down <span className="text-gradient">before your users do.</span>
           </motion.h1>
 
-          <motion.p variants={itemVariants} className="text-base sm:text-lg md:text-xl text-gray-400 BodyFont max-w-2xl mx-auto mb-10 leading-relaxed">
-            Track uptime, response times, and failures in real-time.
-            Get alerted before your users ever notice.
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.25 }}
+            className="text-base sm:text-lg md:text-xl text-gray-400 BodyFont max-w-2xl mx-auto mb-10 leading-relaxed"
+          >
+            Watchtower tracks uptime and response times around the clock and emails you the moment something breaks.
           </motion.p>
 
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-20">
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(245, 158, 11, 0.5)" }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/signup")}
-              className="w-full sm:w-auto px-8 py-4 bg-amber-500 text-black font-bold rounded-xl transition-all HeadingFont"
-            >
-              Start Watching
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.05)" }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full sm:w-auto px-8 py-4 border border-white/20 text-white font-bold rounded-xl transition-all HeadingFont"
-            >
-              See It Live
-            </motion.button>
-          </motion.div>
-
-          {/* Live Stats Bar */}
           <motion.div
-            variants={itemVariants}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 p-4 sm:p-8 bg-[#111118] border border-white/5 rounded-3xl shadow-2xl relative overflow-hidden"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
           >
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-right from-transparent via-amber-500/50 to-transparent" />
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-amber-500 HeadingFont mb-1">
-                <Counter value="99.98%" />
-              </div>
-              <div className="text-xs uppercase tracking-widest text-gray-500 BodyFont">Uptime Tracked</div>
-            </div>
-            <div className="hidden md:block w-[1px] h-12 bg-white/10 mx-auto self-center" />
-            <div className="text-center border-y border-white/5 py-6 md:py-0 md:border-y-0">
-              <div className="text-2xl sm:text-3xl font-bold text-amber-500 HeadingFont mb-1">
-                <Counter value="1.2M+" />
-              </div>
-              <div className="text-xs uppercase tracking-widest text-gray-500 BodyFont">Checks Per Day</div>
-            </div>
-            <div className="hidden md:block w-[1px] h-12 bg-white/10 mx-auto self-center" />
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-amber-500 HeadingFont mb-1">
-                &lt; <Counter value="30s" />
-              </div>
-              <div className="text-xs uppercase tracking-widest text-gray-500 BodyFont">Alert Time</div>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.04, boxShadow: "0 0 40px rgba(245, 158, 11, 0.5)" }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate("/signup")}
+              className="shimmer w-full sm:w-auto px-8 py-4 bg-amber-500 text-black font-bold rounded-xl HeadingFont"
+            >
+              Start Watching — it's free
+            </motion.button>
+            <motion.a
+              href="#how"
+              whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.06)" }}
+              whileTap={{ scale: 0.96 }}
+              className="w-full sm:w-auto px-8 py-4 border border-white/15 text-white font-bold rounded-xl HeadingFont text-center"
+            >
+              How it works
+            </motion.a>
           </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 60 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+          className="max-w-5xl mx-auto mt-16 sm:mt-24 relative z-10"
+        >
+          <div className="absolute -inset-x-10 -bottom-10 h-40 bg-amber-500/15 blur-[100px] rounded-full pointer-events-none" />
+          <div className="relative">
+            <ProductPreview />
+            <div className="floaty hidden md:flex absolute -right-6 -bottom-8 items-start gap-3 w-72 p-4 rounded-2xl bg-[#14141c]/95 backdrop-blur-xl border border-white/10 shadow-2xl text-left">
+              <div className="w-9 h-9 rounded-lg bg-red-500/15 text-red-400 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" /></svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold HeadingFont">example.com is down</p>
+                <p className="text-xs text-gray-500 BodyFont mt-0.5">Email alert sent · sample</p>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </section>
 
-      {/* Dashboard Preview */}
-      <section className="py-20 px-4 sm:px-8 relative">
+      {/* Features */}
+      <section id="features" className="py-24 px-4 sm:px-8">
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            {/* Glow beneath card */}
-            <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[120%] h-64 bg-amber-500/20 blur-[120px] rounded-full" />
-
-            <motion.div
-              animate={{ y: [0, -15, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="relative z-10 p-2 sm:p-4 bg-[#1a1a24] border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)]"
-            >
-              <div className="flex items-center gap-1.5 px-2 sm:px-4 py-3 border-b border-white/5 bg-white/5 rounded-t-xl">
-                <div className="w-3 h-3 rounded-full bg-red-500/50" />
-                <div className="w-3 h-3 rounded-full bg-amber-500/50" />
-                <div className="w-3 h-3 rounded-full bg-green-500/50" />
-                <div className="ml-2 sm:ml-4 h-4 w-32 sm:w-64 bg-white/5 rounded-full" />
-              </div>
-              <div className="aspect-video bg-[#0a0a0f] relative overflow-hidden flex items-center justify-center group">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-full max-w-3xl flex flex-col gap-4 sm:gap-6 p-4 sm:p-8">
-                    <div className="flex flex-col sm:flex-row justify-between items-end gap-2">
-                      <div className="h-8 w-32 sm:w-48 bg-white/10 rounded-lg animate-pulse" />
-                      <div className="h-4 w-20 sm:w-32 bg-white/5 rounded-full" />
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-24 sm:h-32 bg-white/5 border border-white/5 rounded-xl flex flex-col p-2 sm:p-4 gap-2">
-                          <div className="h-3 w-10 sm:w-12 bg-white/10 rounded-full" />
-                          <div className="h-6 w-12 sm:w-16 bg-amber-500/40 rounded-lg mt-auto" />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="h-40 sm:h-64 bg-white/5 border border-white/5 rounded-xl overflow-hidden relative">
-                      <div className="absolute inset-0 flex items-end px-4 sm:px-12 gap-0.5 sm:gap-1 pb-2 sm:pb-4">
-                        {[...Array(30)].map((_, i) => (
-                          <div key={i} style={{ height: `${Math.random() * 80 + 20}%` }} className="flex-1 bg-amber-500/20 rounded-t-sm" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+          <motion.div {...fadeUp} className="text-center mb-14">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-500 mb-3 HeadingFont font-bold">Features</p>
+            <h2 className="text-3xl md:text-5xl font-bold HeadingFont tracking-tight">Everything you need to stay up.</h2>
           </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+            {FEATURES.map((f, i) => (
+              <SpotlightCard
+                key={f.title}
+                {...fadeUp}
+                transition={{ ...fadeUp.transition, delay: i * 0.08 }}
+                whileHover={{ y: -6 }}
+                className={`group relative p-7 rounded-3xl bg-gradient-to-b from-white/[0.05] to-white/[0.01] border border-white/10 hover:border-amber-500/40 transition-colors overflow-hidden ${f.span}`}
+              >
+                <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-amber-500/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative w-12 h-12 mb-6 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center">
+                  <Icon d={f.icon} />
+                </div>
+                <h3 className="relative text-xl font-bold HeadingFont mb-2">{f.title}</h3>
+                <p className="relative text-gray-400 BodyFont leading-relaxed">{f.desc}</p>
+              </SpotlightCard>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-24 px-4 sm:px-8 relative overflow-hidden">
+      {/* How it works */}
+      <section id="how" className="py-24 px-4 sm:px-8">
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold HeadingFont mb-4">Command-Level Visibility <br className="hidden md:block" /> Over Every Request</h2>
-            <div className="w-16 sm:w-24 h-1 bg-amber-500 mx-auto rounded-full" />
+          <motion.div {...fadeUp} className="text-center mb-14">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-500 mb-3 HeadingFont font-bold">How it works</p>
+            <h2 className="text-3xl md:text-5xl font-bold HeadingFont tracking-tight">Up and running in a minute.</h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-            {[
-              { icon: "🔭", title: "Real-Time Monitoring", desc: "24/7 uptime and response tracking across all your endpoints" },
-              { icon: "⚡", title: "Instant Alerts", desc: "Email notifications the moment a site goes down or slows" },
-              { icon: "🌐", title: "Global Coverage", desc: "Checks from multiple regions so you catch regional outages fast" }
-            ].map((f, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+            {STEPS.map((s, i) => (
               <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -10, borderColor: "rgba(245, 158, 11, 0.4)" }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                viewport={{ once: true }}
-                className="p-6 sm:p-8 bg-[#1a1a24] border border-white/5 rounded-3xl transition-all group overflow-hidden relative"
+                key={s.n}
+                {...fadeUp}
+                transition={{ ...fadeUp.transition, delay: i * 0.12 }}
+                className="relative text-center px-4"
               >
-                <div className="absolute -top-10 -right-10 w-24 sm:w-32 h-24 sm:h-32 bg-amber-500/5 blur-3xl group-hover:bg-amber-500/10 transition-colors" />
-                <div className="text-3xl sm:text-4xl mb-4 sm:mb-6">{f.icon}</div>
-                <h3 className="text-lg sm:text-xl font-bold HeadingFont mb-2 sm:mb-3 group-hover:text-amber-500 transition-colors">{f.title}</h3>
-                <p className="text-gray-400 BodyFont leading-relaxed">{f.desc}</p>
+                <div className="mx-auto mb-6 w-16 h-16 rounded-2xl bg-[#111118] border border-amber-500/30 flex items-center justify-center text-amber-500 text-lg font-bold HeadingFont shadow-[0_0_30px_rgba(245,158,11,0.15)]">
+                  {s.n}
+                </div>
+                <h3 className="text-xl font-bold HeadingFont mb-2">{s.title}</h3>
+                <p className="text-gray-400 BodyFont">{s.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-24 px-4 sm:px-8 relative bg-[#0a0a0f]">
+      {/* Pricing */}
+      <section id="pricing" className="py-24 px-4 sm:px-8">
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold HeadingFont mb-4">No Surprises. Just Clarity.</h2>
-            <p className="text-gray-400 BodyFont">Choose the plan that scales with your growth.</p>
+          <motion.div {...fadeUp} className="text-center mb-14">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-500 mb-3 HeadingFont font-bold">Pricing</p>
+            <h2 className="text-3xl md:text-5xl font-bold HeadingFont tracking-tight mb-3">Free while we're in beta.</h2>
+            <p className="text-gray-400 BodyFont">No credit card required. Paid plans may come later — we'll tell you first.</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
-            {/* Free */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="p-6 sm:p-8 bg-[#111118] border border-white/5 rounded-3xl flex flex-col"
+          <motion.div
+            {...fadeUp}
+            className="relative max-w-md mx-auto p-8 rounded-3xl flex flex-col bg-gradient-to-b from-amber-500/10 to-[#111118] border border-amber-500/60 shadow-[0_0_60px_rgba(245,158,11,0.12)]"
+          >
+            <div className="absolute top-0 right-8 -translate-y-1/2 px-4 py-1 bg-amber-500 text-black text-[10px] font-black uppercase tracking-widest rounded-full">
+              Beta
+            </div>
+            <h3 className="text-lg font-bold HeadingFont mb-2 text-amber-500">Watchtower</h3>
+            <div className="flex items-baseline gap-2 mb-8">
+              <span className="text-5xl font-bold HeadingFont">Free</span>
+              <span className="text-gray-500 text-sm">during beta</span>
+            </div>
+            <ul className="space-y-3 mb-10 flex-1">
+              {FREE_FEATURES.map((li) => (
+                <li key={li} className="flex items-center gap-3 text-sm text-gray-300 BodyFont">
+                  <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                  {li}
+                </li>
+              ))}
+            </ul>
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(245, 158, 11, 0.4)" }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate("/signup")}
+              className="w-full py-4 rounded-xl font-bold HeadingFont bg-amber-500 text-black"
             >
-              <div className="mb-6 sm:mb-8">
-                <h3 className="text-lg sm:text-xl font-bold HeadingFont mb-2">Free</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-bold HeadingFont">$0</span>
-                  <span className="text-gray-500 text-sm">/mo</span>
-                </div>
-              </div>
-              <ul className="space-y-3 sm:space-y-4 mb-8 sm:mb-10 flex-1">
-                {["Monitor 1 site", "Basic uptime checks", "Email alerts"].map((li, i) => (
-                  <li key={i} className="flex items-center gap-2 sm:gap-3 text-sm text-gray-400">
-                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                    {li}
-                  </li>
-                ))}
-              </ul>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate("/login")}
-                className="w-full py-3 sm:py-4 px-4 sm:px-6 border border-white/10 rounded-xl hover:bg-white/5 transition-colors HeadingFont font-bold"
-              >
-                Get Started Free
-              </motion.button>
-            </motion.div>
-
-            {/* Pro */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              viewport={{ once: true }}
-              className="p-6 sm:p-8 bg-[#1a1a24] border-2 border-amber-500 rounded-3xl flex flex-col relative"
-            >
-              <div className="absolute top-0 right-4 sm:right-8 -translate-y-1/2 px-3 sm:px-4 py-1 bg-amber-500 text-black text-[10px] font-black uppercase tracking-widest rounded-full">
-                Most Popular
-              </div>
-              <div className="mb-6 sm:mb-8">
-                <h3 className="text-lg sm:text-xl font-bold HeadingFont mb-2 text-amber-500">Pro</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-bold HeadingFont">$9</span>
-                  <span className="text-gray-500 text-sm">/mo</span>
-                </div>
-              </div>
-              <ul className="space-y-3 sm:space-y-4 mb-8 sm:mb-10 flex-1">
-                {["Up to 5 sites", "Advanced checks", "Instant alerts", "Detailed logs"].map((li, i) => (
-                  <li key={i} className="flex items-center gap-2 sm:gap-3 text-sm text-gray-200">
-                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                    {li}
-                  </li>
-                ))}
-              </ul>
-              <motion.button
-                whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(245, 158, 11, 0.4)" }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate("/signup")}
-                className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-amber-500 text-black rounded-xl font-bold HeadingFont shadow-xl"
-              >
-                Start Pro Trial
-              </motion.button>
-            </motion.div>
-
-            {/* Enterprise */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              viewport={{ once: true }}
-              className="p-6 sm:p-8 bg-[#111118] border border-white/5 rounded-3xl flex flex-col"
-            >
-              <div className="mb-6 sm:mb-8">
-                <h3 className="text-lg sm:text-xl font-bold HeadingFont mb-2">Enterprise</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-bold HeadingFont">$20</span>
-                  <span className="text-gray-500 text-sm">/mo</span>
-                </div>
-              </div>
-              <ul className="space-y-3 sm:space-y-4 mb-8 sm:mb-10 flex-1">
-                {["Custom solutions", "Dedicated support", "Unlimited endpoints"].map((li, i) => (
-                  <li key={i} className="flex items-center gap-2 sm:gap-3 text-sm text-gray-400">
-                    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                    {li}
-                  </li>
-                ))}
-              </ul>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full py-3 sm:py-4 px-4 sm:px-6 border border-white/10 rounded-xl hover:bg-white/5 transition-colors HeadingFont font-bold"
-              >
-                Contact Sales
-              </motion.button>
-            </motion.div>
-          </div>
+              Start Watching
+            </motion.button>
+          </motion.div>
         </div>
       </section>
 
+      {/* FAQ */}
+      <section id="faq" className="py-24 px-4 sm:px-8">
+        <div className="max-w-3xl mx-auto">
+          <motion.div {...fadeUp} className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-500 mb-3 HeadingFont font-bold">FAQ</p>
+            <h2 className="text-3xl md:text-5xl font-bold HeadingFont tracking-tight">Questions, answered.</h2>
+          </motion.div>
+          <motion.div {...fadeUp} className="border-t border-white/10">
+            {FAQS.map((f) => (
+              <FaqItem key={f.q} {...f} />
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-24 px-4 sm:px-8">
+        <motion.div
+          {...fadeUp}
+          className="max-w-5xl mx-auto relative overflow-hidden text-center rounded-[2rem] border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-[#111118] to-[#0a0a0f] px-6 py-16 sm:py-20"
+        >
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-500/20 blur-[100px] rounded-full pointer-events-none" />
+          <h2 className="relative text-3xl md:text-5xl font-bold HeadingFont tracking-tight mb-4">Stop finding out from your users.</h2>
+          <p className="relative text-gray-400 BodyFont mb-8 max-w-xl mx-auto">Add your first site in under a minute.</p>
+          <motion.button
+            whileHover={{ scale: 1.04, boxShadow: "0 0 40px rgba(245, 158, 11, 0.5)" }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => navigate("/signup")}
+            className="relative px-8 py-4 bg-amber-500 text-black font-bold rounded-xl HeadingFont"
+          >
+            Start Watching
+          </motion.button>
+        </motion.div>
+      </section>
+
       {/* Footer */}
-      <footer className="py-12 sm:py-16 px-4 sm:px-8 border-t border-white/5 bg-[#0a0a0f]">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sm:gap-8 mb-8 sm:mb-12">
-            <div className="flex flex-col items-center sm:items-start gap-4">
-              <div className="flex items-center gap-2">
-                <svg className="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 4.5l-7.5 15h15L12 4.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                </svg>
-                <span className="text-lg font-bold tracking-tight text-white HeadingFont">Watchtower</span>
-              </div>
-              <p className="text-gray-500 text-sm BodyFont">Watching so you don't have to.</p>
-            </div>
-            <div className="flex gap-6 sm:gap-8 text-sm text-gray-400 BodyFont">
-              <a href="#" className="hover:text-amber-500">Security</a>
-              <a href="#" className="hover:text-amber-500">Terms</a>
-              <a href="#" className="hover:text-amber-500">Privacy</a>
-            </div>
+      <footer className="py-12 px-4 sm:px-8 border-t border-white/5">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Logo className="w-6 h-6" />
+            <span className="text-lg font-bold tracking-tight HeadingFont">Watchtower</span>
+            <span className="ml-3 text-gray-500 text-sm BodyFont hidden sm:block">Watching so you don't have to.</span>
           </div>
-          <div className="text-center sm:text-left pt-6 sm:pt-8 border-t border-white/5 text-gray-600 text-[10px] uppercase tracking-[0.2em] BodyFont">
-            © 2025 Watchtower. All rights reserved.
+          <div className="flex gap-6 text-sm text-gray-400 BodyFont">
+            <Link to="/security" className="hover:text-amber-500 transition-colors">Security</Link>
+            <Link to="/terms" className="hover:text-amber-500 transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy</Link>
           </div>
         </div>
+        <p className="max-w-6xl mx-auto mt-8 text-gray-600 text-[10px] uppercase tracking-[0.2em] BodyFont text-center sm:text-left">
+          © {new Date().getFullYear()} Watchtower. All rights reserved.
+        </p>
       </footer>
     </div>
   );

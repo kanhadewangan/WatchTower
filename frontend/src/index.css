@@ -1,1 +1,6 @@
-@import 'tailwindcss'
+@import 'tailwindcss';
+
+/* Slightly smaller root size: every rem-based size (text, icons, spacing) scales down together */
+html {
+  font-size: 14px;
+}

@@ -223,24 +223,10 @@ async function RemoveoldLogs() {
 }
 
 
-// Fetch all checks from Redis buffer
-export async function fetchAllChecks() {
-  const BATCH_SIZE = 100;
-  const allLogs = [];
-
-  while (true) {
-    // lPop returns a single item, loop to get multiple
-    const item = await client.lPop("checks:buffer");
-
-    if (!item) break;
-
-    allLogs.push(JSON.parse(item));
-    
-    // Stop if we've fetched enough items
-    if (allLogs.length >= BATCH_SIZE) break;
-  }
-
-  return allLogs;
+// Pop up to `count` checks from the Redis buffer in a single round trip
+export async function fetchAllChecks(count = 1000) {
+  const items = await client.lPopCount("checks:buffer", count);
+  return (items ?? []).map((item) => JSON.parse(item));
 }
 
 if (process.env.NODE_ENV !== "test") {

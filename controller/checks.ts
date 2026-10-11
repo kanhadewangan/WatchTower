@@ -444,6 +444,78 @@ router.delete('/checks/:websitename', authenticateToken, async (req, res) => {
     }
 });
 
+type IncidentRow = {
+    website_id: string;
+    website_name: string;
+    website_url: string;
+    started_at: Date;
+    last_failed_at: Date;
+    resolved_at: Date | null;
+    failed_checks: number;
+    status_codes: number[];
+};
+
+// Incidents are derived from checks: a run of consecutive DOWN checks for one website is one incident.
+// It is resolved by the first UP check after the run, or ongoing if there is none.
+router.get('/incidents', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user!.userId;
+        const days = Math.min(Math.max(parseInt(String(req.query.days ?? '30'), 10) || 30, 1), 30);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+        const rows = await prisma.$queryRaw<IncidentRow[]>`
+            WITH ordered AS (
+                SELECT c.website_id, c.status, c.status_code, c.created_at,
+                    ROW_NUMBER() OVER (PARTITION BY c.website_id ORDER BY c.created_at) AS rn,
+                    ROW_NUMBER() OVER (PARTITION BY c.website_id, c.status ORDER BY c.created_at) AS rn_status
+                FROM checks c
+                WHERE c."userId" = ${userId} AND c.created_at >= ${since}
+            ),
+            islands AS (
+                SELECT website_id,
+                    MIN(created_at) AS started_at,
+                    MAX(created_at) AS last_failed_at,
+                    COUNT(*)::int AS failed_checks,
+                    ARRAY_AGG(DISTINCT status_code) AS status_codes
+                FROM ordered
+                WHERE status = 'DOWN'
+                GROUP BY website_id, rn - rn_status
+            )
+            SELECT i.website_id, w.name AS website_name, w.url AS website_url,
+                i.started_at, i.last_failed_at, i.failed_checks, i.status_codes,
+                (SELECT MIN(c2.created_at) FROM checks c2
+                    WHERE c2.website_id = i.website_id AND c2.status = 'UP' AND c2.created_at > i.last_failed_at
+                ) AS resolved_at
+            FROM islands i
+            JOIN "Website" w ON w.id = i.website_id
+            ORDER BY i.started_at DESC
+            LIMIT 200
+        `;
+
+        const now = Date.now();
+        const incidents = rows.map((r) => {
+            const ongoing = r.resolved_at === null;
+            const end = ongoing ? now : new Date(r.resolved_at!).getTime();
+            return {
+                websiteId: r.website_id,
+                websiteName: r.website_name,
+                websiteUrl: r.website_url,
+                startedAt: r.started_at,
+                resolvedAt: r.resolved_at,
+                status: ongoing ? 'ONGOING' : 'RESOLVED',
+                failedChecks: r.failed_checks,
+                statusCodes: r.status_codes,
+                durationMs: Math.max(0, end - new Date(r.started_at).getTime()),
+            };
+        });
+
+        res.json({ incidents, days });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 const checks = router;
 
 export default checks;

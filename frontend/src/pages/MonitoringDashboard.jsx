@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import {lazy , suspense} from 'react';
+import { keepPreviousData } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,128 +13,148 @@ import {
   Area,
   BarChart,
   Bar,
-  ReferenceLine
+  Cell,
 } from "recharts";
 import { useCustomQuery } from "../hooks/useQuery";
+import Sidebar from "../components/Sidebar";
+
+const MAX_POINTS = 90;
+const LOG_LIMIT = 50;
+
+const TIME_FILTERS = [
+  { key: "1-hour", label: "1H", value: "last-1-hour" },
+  { key: "24-hours", label: "24H", value: "last-24-hours" },
+  { key: "7-days", label: "7D", value: "last-7-days" },
+  { key: "30-days", label: "30D", value: "last-30-days" },
+];
+
+const REGIONS = [
+  { key: "US_EAST_1", label: "US East (Virginia)" },
+  { key: "US_WEST_1", label: "US West (California)" },
+  { key: "EU_CENTRAL_1", label: "Europe (Frankfurt)" },
+  { key: "AP_SOUTHEAST_1", label: "Asia Pacific (Singapore)" },
+];
+
+const getAuthHeaders = () => ({
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+});
+
+// Averages checks into at most MAX_POINTS buckets so long ranges (30D can be ~43k checks) stay fast and readable.
+const bucketChecks = (checks, longRange) => {
+  if (!checks.length) return [];
+  const size = Math.max(1, Math.ceil(checks.length / MAX_POINTS));
+  const points = [];
+  for (let i = 0; i < checks.length; i += size) {
+    const group = checks.slice(i, i + size);
+    const date = new Date(group[0].created_at);
+    const up = group.filter((c) => c.status === "UP").length;
+    points.push({
+      label: longRange
+        ? date.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+        : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      responseTime: Math.round(group.reduce((sum, c) => sum + (c.response_time || 0), 0) / group.length),
+      uptime: Math.round((up / group.length) * 1000) / 10,
+      checks: group.length,
+    });
+  }
+  return points;
+};
+
+const ChartTooltip = ({ active, payload, unit, name }) => {
+  if (!active || !payload?.length) return null;
+  const p = payload[0].payload;
+  return (
+    <div className="rounded-xl border border-white/10 bg-[#111118] px-3 py-2 text-xs shadow-xl">
+      <p className="text-gray-400 mb-1">{p.label}</p>
+      <p className="font-bold text-white">
+        {payload[0].value}
+        {unit} <span className="font-normal text-gray-500">{name}</span>
+      </p>
+      {p.checks > 1 && <p className="text-gray-500 mt-0.5">avg of {p.checks} checks</p>}
+    </div>
+  );
+};
 
 const MonitoringDashboard = () => {
   const navigate = useNavigate();
   const { websitename } = useParams();
-  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Data states
-  const [uptimeStats, setUptimeStats] = useState({
-    uptimePercentage: 0,
-    averageResponseTime: 0,
-    errorMetric: 0
-  });
-  const [latestCheck, setLatestCheck] = useState(null);
-  const [checks, setChecks] = useState([]);
-  const [timeFilter, setTimeFilter] = useState('24-hours');
-  const [selectedRegion, setSelectedRegion] = useState('US_EAST_1');
+  const [actionError, setActionError] = useState("");
+  const [timeFilter, setTimeFilter] = useState("24-hours");
+  const [selectedRegion, setSelectedRegion] = useState("US_EAST_1");
 
   // UI states
   const [showStartModal, setShowStartModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const timeFilters = [
-    { key: '1-hour', label: '1H', value: 'last-1-hour' },
-    { key: '24-hours', label: '24H', value: 'last-24-hours' },
-    { key: '7-days', label: '7D', value: 'last-7-days' },
-    { key: '30-days', label: '30D', value: 'last-30-days' }
-  ];
+  const apiBase = `${import.meta.env.VITE_URL}/api/v1/checks`;
+  const siteParam = encodeURIComponent(websitename);
 
-  const regions = [
-    { key: 'US_EAST_1', label: 'US East (Virginia)' },
-    { key: 'US_WEST_1', label: 'US West (California)' },
-    { key: 'EU_CENTRAL_1', label: 'Europe (Frankfurt)' },
-    { key: 'AP_SOUTHEAST_1', label: 'Asia Pacific (Singapore)' }
-  ];
+  // Summary: all-time uptime stats + the latest check
+  const summary = useCustomQuery(["summary", websitename], async () => {
+    const [uptimeRes, latestRes] = await Promise.all([
+      axios.get(`${apiBase}/uptime/${siteParam}`, { headers: getAuthHeaders() }),
+      axios.get(`${apiBase}/latest-check/${siteParam}`, { headers: getAuthHeaders() }),
+    ]);
+    return { uptimeStats: uptimeRes.data, latestCheck: latestRes.data.latestCheck };
+  });
 
-  const { data: allData, isLoading,  refetch } = useCustomQuery(
-    ['allData', websitename],
+  // Checks for the selected time range (keeps the old chart on screen while a new range loads)
+  const checksQuery = useCustomQuery(
+    ["checks", websitename, timeFilter],
     async () => {
-      const [uptimeRes, latestCheckRes, checksRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_URL}/api/v1/checks/uptime/${websitename}`, { headers: getAuthHeaders() }),
-        axios.get(`${import.meta.env.VITE_URL}/api/v1/checks/latest-check/${websitename}`, { headers: getAuthHeaders() }),
-        axios.get(`${import.meta.env.VITE_URL}/api/v1/checks/last-24-hours/${websitename}`, { headers: getAuthHeaders() })
-      ]);
-      return {
-        uptimeStats: uptimeRes.data,
-        latestCheck: latestCheckRes.data.latestCheck,
-        checks: checksRes.data.checks || []
-      };
-    },
-    {
-      onSuccess: (data) => {
-        setUptimeStats(data.uptimeStats);
-        setLatestCheck(data.latestCheck);
-        setChecks(data.checks);
-        setLoading(false);
-      },
-      onError: (err) => {
-        setError("Please Wait We are Fetching the data .");
-        setLoading(false);
+      const filter = TIME_FILTERS.find((f) => f.key === timeFilter) || TIME_FILTERS[1];
+      try {
+        const res = await axios.get(`${apiBase}/${filter.value}/${siteParam}`, { headers: getAuthHeaders() });
+        return res.data.checks || [];
+      } catch (err) {
+        if (err.response?.status === 404) return [];
+        throw err;
       }
-    }
+    },
+    { placeholderData: keepPreviousData }
   );
 
+  const uptimeStats = summary.data?.uptimeStats || { uptimePercentage: 0, averageResponseTime: 0, errorMetric: 0 };
+  const latestCheck = summary.data?.latestCheck || null;
+  const checks = checksQuery.data || [];
 
-  // Check authentication
+  // Expired/invalid token -> back to login
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!localStorage.getItem("token")) {
       navigate("/login");
       return;
     }
-    if (websitename) refetch();
-  }, [websitename, navigate, refetch]);
-
-  // Fetch data when time filter changes
-  useEffect(() => {
-    if (websitename && !loading) fetchChecks();
-  }, [timeFilter, loading, websitename]);
-
-  const getAuthHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-  });
-
-  
-
-  const fetchUptimeStats = async () => {
-    const response = await axios.get(`${import.meta.env.VITE_URL}/api/v1/checks/uptime/${websitename}`, { headers: getAuthHeaders() });
-    setUptimeStats(response.data);
-  };
-  const fetchLatestCheck = async () => {
-    const response = await axios.get(`${import.meta.env.VITE_URL}/api/v1/checks/latest-check/${websitename}`, { headers: getAuthHeaders() });
-    setLatestCheck(response.data.latestCheck);
-  };
-
-  const fetchChecks = async () => {
-    try {
-      const filterValue = timeFilters.find(f => f.key === timeFilter)?.value || 'last-24-hours';
-      const response = await axios.get(`${import.meta.env.VITE_URL}/api/v1/checks/${filterValue}/${websitename}`, { headers: getAuthHeaders() });
-      setChecks(response.data.checks || []);
-    } catch (err) {
-      if (err.response && err.response.status === 404) {
-        setChecks([]);
-      } else {
-        console.error(err);
-      }
+    const status = summary.error?.response?.status;
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
     }
+  }, [summary.error, navigate]);
+
+  const { refetch: refetchSummary } = summary;
+  const { refetch: refetchChecks } = checksQuery;
+  const refreshAll = () => {
+    refetchSummary();
+    refetchChecks();
   };
 
   const startMonitoring = async () => {
     try {
       setActionLoading(true);
-      const res = await axios.post(`${import.meta.env.VITE_URL}/api/v1/checks/add-check`, { websitename, reigon: selectedRegion }, { headers: getAuthHeaders() });
-      console.log(res.data);
+      setActionError("");
+      await axios.post(
+        `${apiBase}/add-check`,
+        { websitename, region: selectedRegion },
+        { headers: getAuthHeaders() }
+      );
       setShowStartModal(false);
-      setTimeout(fetchAllData, 2000);
+      setTimeout(refreshAll, 2000);
     } catch (err) {
-      setError("Failed to initiate deployment.");
+      setActionError(err.response?.data?.message || "Couldn't start monitoring. Please try again.");
+      setShowStartModal(false);
     } finally {
       setActionLoading(false);
     }
@@ -145,77 +163,63 @@ const MonitoringDashboard = () => {
   const deleteAllChecks = async () => {
     try {
       setActionLoading(true);
-      await axios.delete(`${import.meta.env.VITE_URL}/api/v1/checks/checks/${websitename}`, { headers: getAuthHeaders() });
+      setActionError("");
+      await axios.delete(`${apiBase}/checks/${siteParam}`, { headers: getAuthHeaders() });
       setShowDeleteModal(false);
-      // fetchAllData();
+      refreshAll();
     } catch (err) {
-      setError("Protocol wipe failed.");
+      setActionError(err.response?.data?.message || "Couldn't delete the check history. Please try again.");
+      setShowDeleteModal(false);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const getStatusColor = (status) => status === 'UP' ? 'text-green-500' : 'text-red-500';
-  const getStatusBg = (status) => status === 'UP' ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20';
+  const longRange = timeFilter === "7-days" || timeFilter === "30-days";
+  const chartData = bucketChecks(checks, longRange);
+  const recentChecks = checks.slice(-LOG_LIMIT).reverse();
 
-  const prepareChartData = () => {
-    if (!checks || checks.length === 0) return [];
-    return checks.slice().reverse().map(check => ({
-      time: new Date(check.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      responseTime: check.response_time || 0,
-      status: check.status === 'UP' ? 1 : 0,
-      fullDate: new Date(check.created_at).toLocaleString()
-    }));
-  };
-
-  const chartData = prepareChartData();
-
-  // Update state when allData from query changes
-  useEffect(() => {
-    if (allData) {
-      setUptimeStats(allData.uptimeStats);
-      setLatestCheck(allData.latestCheck);
-      setChecks(allData.checks);
-      setLoading(false);
-    }
-  }, [allData]);
-
-  // Handle loading and error states from the query
-  useEffect(() => {
-    setLoading(isLoading);
-  }, [isLoading]);
-
-  useEffect(() => {
-    if (error) {
-      setError("Failed to fetch monitoring data. Please try again.");
-    }
-  }, [error]);
+  const loading = summary.isLoading;
+  const error = summary.isError
+    ? summary.error?.response?.status === 404
+      ? `We couldn't find a monitor named "${websitename}".`
+      : "Failed to load monitoring data. Please try again."
+    : null;
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center flex-col space-y-4">
-        <h2 className="text-red-500 text-2xl font-black HeadingFont uppercase tracking-widest">{error}</h2>
-        <button onClick={() => navigate('/monitor')} className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg HeadingFont transition-colors text-sm">Return to Monitor</button>
+      <div className="h-screen bg-[#0a0a0f] flex">
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className="flex-1 min-w-0 flex items-center justify-center flex-col space-y-4">
+          <h2 className="text-red-400 text-xl sm:text-2xl font-bold HeadingFont text-center px-6">{error}</h2>
+          <div className="flex gap-3">
+            <button onClick={refreshAll} className="px-6 py-2 bg-amber-500 text-black font-bold rounded-lg HeadingFont transition-colors text-sm">Try again</button>
+            <button onClick={() => navigate('/monitor')} className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg HeadingFont transition-colors text-sm">Back to monitors</button>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
-            <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      <div className="h-screen bg-[#0a0a0f] flex">
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className="flex-1 min-w-0 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
+              <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-amber-500 HeadingFont uppercase tracking-widest text-xs animate-pulse">Decrypting Signal...</p>
           </div>
-          <p className="text-amber-500 HeadingFont uppercase tracking-widest text-xs animate-pulse">Decrypting Signal...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-x-hidden relative">
+    <div className="h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/30 overflow-hidden flex relative">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
         .HeadingFont { font-family: 'Space Grotesk', sans-serif; }
@@ -231,10 +235,21 @@ const MonitoringDashboard = () => {
 
       <div className="absolute inset-0 hex-grid pointer-events-none opacity-50" />
 
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden relative z-10">
       {/* Navigation Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4">
+      <header className="sticky top-0 z-30 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-6">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-xl hover:bg-white/5 text-gray-500 transition lg:hidden"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <motion.div
               whileHover={{ scale: 1.05 }}
               onClick={() => navigate("/monitor")}
@@ -251,11 +266,11 @@ const MonitoringDashboard = () => {
           <div className="flex items-center gap-3">
             <motion.button
               whileHover={{ scale: 1.02 }}
-              onClick={() => fetchAllData()}
+              onClick={refreshAll}
               className="p-2 border border-white/5 rounded-lg hover:bg-white/5 transition-colors"
-              title="Refresh Signal"
+              title="Refresh" aria-label="Refresh"
             >
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-4 h-4 text-gray-500 ${summary.isFetching || checksQuery.isFetching ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </motion.button>
@@ -263,9 +278,15 @@ const MonitoringDashboard = () => {
         </div>
       </header>
   
-      <main className="max-w-7xl mx-auto px-6 py-12 relative z-10">
+      <main className="max-w-7xl mx-auto px-6 sm:px-10 py-14 relative z-10">
+        {actionError && (
+          <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+            <span>{actionError}</span>
+            <button onClick={() => setActionError("")} aria-label="Dismiss" className="text-red-300/80 hover:text-white">✕</button>
+          </div>
+        )}
         {/* Signal Overview Hero */}
-        <section className="mb-12">
+        <section className="mb-14">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -279,11 +300,15 @@ const MonitoringDashboard = () => {
                   <div className={`w-3 h-3 rounded-full ${latestCheck?.status === 'UP' ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]'} animate-pulse`} />
                   <span className="text-xs font-black HeadingFont uppercase tracking-[0.3em] text-gray-500">Live Surveillance System</span>
                 </div>
-                <h2 className="text-5xl md:text-7xl font-black HeadingFont mb-4 tracking-tighter uppercase">{websitename}</h2>
-                {latestCheck && (
+                <h2 className="text-3xl md:text-5xl font-black HeadingFont mb-5 tracking-tight uppercase">{websitename}</h2>
+                {latestCheck ? (
                   <p className="text-gray-400 BodyFont text-sm max-w-xl">
-                    Operational status verified from <span className="text-amber-500 font-bold">{latestCheck.reigon}</span> at {new Date(latestCheck.created_at).toLocaleTimeString()}. All systems green.
+                    {latestCheck.status === "UP" ? "Last check passed" : "Last check failed"}
+                    {" "}in <span className="text-amber-500 font-bold">{latestCheck.response_time}ms</span> at {new Date(latestCheck.created_at).toLocaleString()}
+                    {latestCheck.region ? <> from <span className="text-amber-500 font-bold">{latestCheck.region}</span></> : null}.
                   </p>
+                ) : (
+                  <p className="text-gray-500 BodyFont text-sm max-w-xl">No checks yet. Start monitoring to see results here.</p>
                 )}
               </div>
 
@@ -310,136 +335,121 @@ const MonitoringDashboard = () => {
         </section>
 
         {/* Global Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-7 mb-14">
           {[
-            { label: 'Uptime Protocol', value: `${uptimeStats.uptimePercentage.toFixed(2)}%`, color: 'text-green-500', trend: 'STABLE' },
-            { label: 'Signal Latency', value: `${Math.round(uptimeStats.averageResponseTime)}ms`, color: 'text-white', trend: 'OPTIMAL' },
-            { label: 'Error Margin', value: `${uptimeStats.errorMetric.toFixed(1)}%`, color: 'text-white/40', trend: 'MINIMAL' }
+            { label: "Uptime (all time)", value: `${uptimeStats.uptimePercentage.toFixed(2)}%`, color: uptimeStats.uptimePercentage >= 95 || !latestCheck ? "text-green-500" : "text-red-400" },
+            { label: "Avg response time", value: `${Math.round(uptimeStats.averageResponseTime)}ms`, color: "text-white" },
+            { label: "Error rate", value: `${uptimeStats.errorMetric.toFixed(1)}%`, color: uptimeStats.errorMetric > 5 ? "text-red-400" : "text-white/60" },
           ].map((stat, i) => (
             <motion.div
-              key={i}
+              key={stat.label}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + i * 0.1 }}
-              className="bg-[#111118]/40 border border-white/5 p-8 rounded-3xl relative group"
+              className="bg-[#111118]/40 border border-white/5 p-8 rounded-3xl"
             >
-              <div className="text-xs font-black HeadingFont text-gray-600 uppercase tracking-widest mb-4 flex justify-between">
-                {stat.label}
-                <span className="text-[10px] text-amber-500/30 group-hover:text-amber-500 transition-colors uppercase">{stat.trend}</span>
-              </div>
-              <div className={`text-4xl font-black HeadingFont ${stat.color}`}>{stat.value}</div>
+              <div className="text-xs font-black HeadingFont text-gray-600 uppercase tracking-widest mb-4">{stat.label}</div>
+              <div className={`text-3xl font-black HeadingFont ${stat.color}`}>{stat.value}</div>
             </motion.div>
           ))}
         </div>
 
-        {/* Analytics Section */}
-        {checks.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-[#111118]/60 border border-white/5 p-8 rounded-[2.5rem] relative overflow-hidden"
-            >
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xs font-black HeadingFont uppercase tracking-[0.3em] text-gray-500">Latency Dynamics</h3>
-                <div className="flex bg-[#0a0a0f] p-1 rounded-xl">
-                  {timeFilters.map(f => (
-                    <button
-                      key={f.key}
-                      onClick={() => setTimeFilter(f.key)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black HeadingFont transition-all ${timeFilter === f.key ? 'bg-amber-500 text-black' : 'text-gray-600 hover:text-white'}`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="h-75 w-full">
+        {/* Analytics Section: always rendered so the range picker never disappears */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h3 className="text-xs font-black HeadingFont uppercase tracking-[0.3em] text-gray-500">Performance</h3>
+          <div className="flex bg-[#0a0a0f] p-1 rounded-xl self-start">
+            {TIME_FILTERS.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setTimeFilter(f.key)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-black HeadingFont transition-all ${timeFilter === f.key ? "bg-amber-500 text-black" : "text-gray-500 hover:text-white"}`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mb-14 transition-opacity ${checksQuery.isPlaceholderData ? "opacity-50" : ""}`}>
+          <div className="bg-[#111118]/60 border border-white/5 p-6 sm:p-8 rounded-[2rem]">
+            <h4 className="text-sm font-bold HeadingFont text-gray-300 mb-1">Response time</h4>
+            <p className="text-xs text-gray-500 BodyFont mb-6">Milliseconds per check (lower is better)</p>
+            <div className="h-72 w-full">
+              {chartData.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-sm text-gray-500 BodyFont">No checks in this time range.</div>
+              ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
+                  <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
                         <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis hide dataKey="time" />
-                    <YAxis hide domain={['dataMin - 100', 'dataMax + 100']} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#111118', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', fontSize: '10px', fontFamily: 'Space Grotesk' }}
-                      itemStyle={{ color: '#f59e0b' }}
-                    />
-                    <Area type="monotone" dataKey="responseTime" stroke="#f59e0b" strokeWidth={3} fill="url(#glow)" />
+                    <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={48} />
+                    <YAxis width={48} tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} domain={[0, "auto"]} tickFormatter={(v) => `${v}ms`} />
+                    <Tooltip content={<ChartTooltip unit="ms" name="response time" />} cursor={{ stroke: "rgba(255,255,255,0.15)" }} />
+                    <Area type="monotone" dataKey="responseTime" stroke="#f59e0b" strokeWidth={2.5} fill="url(#glow)" isAnimationActive={false} />
                   </AreaChart>
                 </ResponsiveContainer>
-              </div>
-            </motion.div>
+              )}
+            </div>
+          </div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-[#111118]/60 border border-white/5 p-8 rounded-[2.5rem]"
-            >
-              <h3 className="text-xs font-black HeadingFont uppercase tracking-[0.3em] text-gray-500 mb-8">Signal Reliability</h3>
-              <div className="h-75 w-full">
+          <div className="bg-[#111118]/60 border border-white/5 p-6 sm:p-8 rounded-[2rem]">
+            <h4 className="text-sm font-bold HeadingFont text-gray-300 mb-1">Availability</h4>
+            <p className="text-xs text-gray-500 BodyFont mb-6">Share of checks that passed (red = some failed)</p>
+            <div className="h-72 w-full">
+              {chartData.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-sm text-gray-500 BodyFont">No checks in this time range.</div>
+              ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis hide dataKey="time" />
-                    <YAxis hide domain={[0, 1]} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#111118', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', fontSize: '10px' }}
-                      formatter={(v) => v === 1 ? 'SIGNAL LOCK' : 'SIGNAL LOST'}
-                    />
-                    <Bar dataKey="status" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={48} />
+                    <YAxis width={48} tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                    <Tooltip content={<ChartTooltip unit="%" name="passed" />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                    <Bar dataKey="uptime" radius={[3, 3, 0, 0]} isAnimationActive={false}>
+                      {chartData.map((p, idx) => (
+                        <Cell key={idx} fill={p.uptime >= 100 ? "#22c55e" : "#ef4444"} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-            </motion.div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* Operational Log */}
-        <section className="bg-[#111118]/20 border border-white/5 rounded-[2.5rem] p-8 md:p-12">
-          <h3 className="text-xs font-black HeadingFont uppercase tracking-[0.4em] text-gray-600 mb-10">Verification Registry</h3>
-          <div className="space-y-4">
-            {checks.map((check, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-                className="group bg-[#111118]/40 hover:bg-[#111118]/80 border border-white/5 rounded-2xl p-5 flex flex-col md:row md:items-center justify-between gap-4 transition-all"
+        {/* Check log */}
+        <section className="bg-[#111118]/20 border border-white/5 rounded-[2rem] p-6 sm:p-10">
+          <div className="flex items-baseline justify-between gap-4 mb-8">
+            <h3 className="text-xs font-black HeadingFont uppercase tracking-[0.3em] text-gray-500">Recent checks</h3>
+            {checks.length > LOG_LIMIT && (
+              <span className="text-xs text-gray-600 BodyFont">Latest {LOG_LIMIT} of {checks.length.toLocaleString()}</span>
+            )}
+          </div>
+          <div className="space-y-3">
+            {recentChecks.map((check) => (
+              <div
+                key={check.id}
+                className="bg-[#111118]/40 hover:bg-[#111118]/80 border border-white/5 rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-colors"
               >
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${check.status === 'UP' ? 'bg-green-500 glow-green' : 'bg-red-500 glow-red'}`} />
-                    <span className={`text-[10px] font-black HeadingFont uppercase tracking-widest ${check.status === 'UP' ? 'text-green-500' : 'text-red-500'}`}>{check.status}</span>
-                  </div>
-                  <div className="w-[px] h-4 bg-white/5" />
-                  <div>
-                    <div className="text-xs font-bold text-white mb-1 HeadingFont uppercase tracking-tight">{new Date(check.created_at).toLocaleString()}</div>
-                    <div className="text-[10px] text-gray-500 BodyFont flex items-center gap-2">
-                      <span className="p-1 rounded bg-white/5 uppercase tracking-tighter">{check.reigon}</span>
-                      <span className="opacity-30">•</span>
-                      <span className="font-mono tracking-tighter uppercase">Payload received in {check.response_time}ms</span>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-4">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${check.status === "UP" ? "bg-green-500" : "bg-red-500"}`} />
+                  <span className={`w-12 text-xs font-black HeadingFont uppercase tracking-widest ${check.status === "UP" ? "text-green-500" : "text-red-500"}`}>{check.status}</span>
+                  <span className="text-sm text-gray-200 BodyFont">{new Date(check.created_at).toLocaleString()}</span>
                 </div>
-                <motion.div whileHover={{ scale: 1.1 }} className="text-gray-700 group-hover:text-amber-500 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </motion.div>
-              </motion.div>
-            ))}
-            {checks.length === 0 && (
-              <div className="py-20 text-center opacity-20">
-                <p className="HeadingFont uppercase tracking-widest text-xs">Awaiting First Signal Transmission...</p>
+                <div className="flex items-center gap-3 text-xs text-gray-500 BodyFont pl-6 sm:pl-0">
+                  {check.region && <span className="px-2 py-0.5 rounded bg-white/5 uppercase tracking-tight">{check.region}</span>}
+                  <span className="font-mono">{check.status_code || "no response"}</span>
+                  <span className="font-mono">{check.response_time}ms</span>
+                </div>
               </div>
+            ))}
+            {recentChecks.length === 0 && (
+              <div className="py-16 text-center text-sm text-gray-500 BodyFont">No checks in this time range yet.</div>
             )}
           </div>
         </section>
@@ -473,7 +483,7 @@ const MonitoringDashboard = () => {
                     onChange={(e) => setSelectedRegion(e.target.value)}
                     className="w-full bg-[#0a0a0f] border border-white/5 rounded-xl p-4 text-sm font-bold HeadingFont focus:ring-1 focus:ring-amber-500/50 outline-none transition-all appearance-none cursor-pointer"
                   >
-                    {regions.map(r => (
+                    {REGIONS.map(r => (
                       <option key={r.key} value={r.key}>{r.label}</option>
                     ))}
                   </select>
@@ -554,6 +564,7 @@ const MonitoringDashboard = () => {
           System Uptime Registry • Core Engine v4.2.0
         </p>
       </footer>
+      </div>
     </div>
   );
 
