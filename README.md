@@ -6,6 +6,14 @@ A robust backend service for monitoring website health, tracking uptime, and sen
 
 ---
 
+## Launch Video
+
+[![Watchtower launch video](brag-output/brag.jpg)](brag-output/brag.mp4)
+
+*Know when your site goes down before your users do. Click the preview to watch (24s).*
+
+---
+
 ## Tech Stack
 
 - **Runtime**: Bun with TypeScript
