@@ -18,8 +18,9 @@ A robust backend service for monitoring website health, tracking uptime, and sen
 
 - **Runtime**: Bun with TypeScript
 - **Framework**: Express.js v5
-- **Database**: PostgreSQL with Prisma ORM
-- **Cache**: Redis (buffering checks and email queue)
+- **Database**: PostgreSQL with Prisma ORM (users and websites)
+- **Check store**: MongoDB with Mongoose (check history and per-website counters)
+- **Cache**: Redis (email queue)
 - **Email**: Nodemailer (Gmail SMTP)
 - **Authentication**: JWT (Bearer tokens)
 
@@ -54,7 +55,7 @@ A robust backend service for monitoring website health, tracking uptime, and sen
     │                      │      │                   │
     │ • Timer             │      │ • Schema          │
     │ • Fetch             │      │ • Client           │
-    │ • Flush             │      │ • Generated Types  │
+    │ • Checker (Mongo)   │      │ • Generated Types  │
     │ • EmailWorker       │      │                   │
     │ • Auth              │      └─────────┬──────────┘
     │                      │                │
@@ -64,10 +65,15 @@ A robust backend service for monitoring website health, tracking uptime, and sen
     │   Redis     │              │   PostgreSQL       │
     │  (Cache)    │              │   (Database)       │
     │             │              │                    │
-    │ • Checks    │              │ • users            │
-    │ • Email Q   │              │ • websites         │
-    │             │              │ • checks           │
+    │ • Email Q   │              │ • users            │
+    │             │              │ • websites         │
     └─────────────┘              └────────────────────┘
+                                 ┌────────────────────┐
+                                 │   MongoDB          │
+                                 │   (Checks)         │
+                                 │ • checks           │
+                                 │ • websitestats     │
+                                 └────────────────────┘
 ```
 
 ---
@@ -88,7 +94,6 @@ model user {
   
   // Relations
   websites    website[]                      // User's monitored websites
-  checks      checks[]                       // User's health checks
 }
 ```
 
@@ -106,34 +111,40 @@ model website {
   
   // Relations
   user        user      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  checks      checks[]                       // Health check records
   
   @@unique([url, userId])                   // URL must be unique per user
 }
 ```
 
-### Model: `checks`
-Stores health check results and monitoring data.
+### Collections: `checks` and `websitestats` (MongoDB)
+Check history lives in MongoDB, not PostgreSQL (see `checker/mongodb`). `websiteId` and `userId` are the PostgreSQL ids.
 
 ```typescript
-model checks {
-  id          String    @id @default(cuid())
-  websiteId   String                         // Foreign key to website
-  userId      String                         // Foreign key to user (denormalized for query performance)
-  statusCode  Int                            // HTTP status code (200, 500, etc.)
-  responseTime Int                           // Response time in milliseconds
-  status      String                         // "UP" or "DOWN"
-  region      String                         // Monitoring region (US_EAST_1, US_WEST_1, EU_CENTRAL_1, AP_SOUTHEAST_1)
-  createdAt   DateTime  @default(now())
-  
-  // Relations
-  website     website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
-  user        user      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([websiteId, createdAt])            // Index for time-series queries
-  @@index([userId, createdAt])
+// checks: one document per health check
+{
+  websiteId: string
+  userId: string
+  statusCode: number        // HTTP status code, 0 when there was no response
+  responseTime: number      // milliseconds
+  status: "UP" | "DOWN"
+  region: string            // US_EAST_1, US_WEST_1, EU_CENTRAL_1, AP_SOUTHEAST_1
+  createdAt: Date
+}
+// indexes: (websiteId, createdAt), (userId, createdAt),
+//          TTL on createdAt (30 days, replaces the old cleanup job)
+
+// websitestats: all-time counters per website, updated atomically with every check
+{
+  websiteId: string         // unique
+  userId: string
+  totalChecks: number
+  upChecks: number
+  downChecks: number
+  totalResponseTime: number // average = totalResponseTime / totalChecks
 }
 ```
+
+Existing PostgreSQL rows can be copied over with `bun run scripts/copy-checks-to-mongo.ts` before applying the migration that drops the old `checks` table.
 
 ---
 
@@ -218,7 +229,7 @@ DELETE /api/v1/websites/:websiteId
 ├─ Auth: JWT required
 ├─ Process:
 │   ├─ Verify website belongs to authenticated user
-│   ├─ Delete website record (cascades to checks)
+│   ├─ Delete website record and its checks in MongoDB
 │   └─ Return success response
 └─ Output: { success: true, message: "Website deleted" }
 ```
@@ -240,66 +251,33 @@ DELETE /api/v1/websites/:websiteId
 #### **controllers/checks.ts**
 
 **Responsibilities:**
-- Create health check configurations
-- Retrieve check results and history
-- Manage check scheduling parameters
+- Start monitoring for a website in a region
+- Serve check history, uptime and incidents from MongoDB (via `checker/mongodb/checker.ts`)
 
-**Key Functions:**
+All routes require a JWT and look the website up by name for the calling user.
 
-```typescript
-POST /api/v1/checks/add-check
-├─ Auth: JWT required
-├─ Input: { websiteId, interval (optional, default 1 min) }
-├─ Process:
-│   ├─ Verify website belongs to user
-│   ├─ Validate interval (min 1 min, max 60 min)
-│   ├─ Store check configuration in memory (Timer service)
-│   └─ Start health check polling loop
-└─ Output: { websiteId, interval, status: "ACTIVE" }
+| Method | Path | Returns |
+|---|---|---|
+| POST | `/api/v1/checks/add-check` | Starts monitoring: `{ websitename, region }` |
+| GET | `/api/v1/checks/checks/:websitename` | `{ checks }`, all stored checks |
+| GET | `/api/v1/checks/uptime/:websitename` | `{ uptimePercentage, averageResponseTime, errorMetric }` (all-time counters) |
+| GET | `/api/v1/checks/latest-check/:websitename` | `{ latestCheck }` |
+| GET | `/api/v1/checks/all-metrics` | `{ totalChecks, up, down, avgResponseTime }` for the user |
+| GET | `/api/v1/checks/last-1-hour/:websitename` | `{ checks }` (also `last-24-hours`, `last-7-days`, `last-30-days`) |
+| GET | `/api/v1/checks/incidents?days=30` | `{ incidents, days }`, runs of consecutive DOWN checks |
+| DELETE | `/api/v1/checks/checks/:websitename` | Deletes the website's checks and counters |
 
-GET /api/v1/checks/:websiteId?limit=100
-├─ Auth: JWT required
-├─ Process:
-│   ├─ Verify website belongs to user
-│   ├─ Query checks from PostgreSQL (ordered by createdAt DESC)
-│   ├─ Apply pagination (limit, offset)
-│   └─ Calculate stats (uptime %, avg response time)
-└─ Output: [
-    {
-      id, websiteId, statusCode, responseTime,
-      status (UP/DOWN), region, createdAt,
-      uptime_percentage, avg_response_time
-    }
-  ]
-
-GET /api/v1/checks/:websiteId/stats?days=7
-├─ Auth: JWT required
-├─ Process:
-│   ├─ Query checks from last N days
-│   ├─ Group by region
-│   ├─ Calculate:
-│   │   ├─ Total checks, success count
-│   │   ├─ Uptime percentage = (success / total) * 100
-│   │   ├─ Average response time
-│   │   └─ Error rate = (failed / total) * 100
-│   └─ Return aggregated statistics
-└─ Output: {
-    uptime_percentage, error_rate, avg_response_time,
-    total_checks, by_region: { ... }
-  }
-```
-
-**Data Structure for Check Results:**
+**Check shape in responses:**
 ```typescript
 interface CheckResult {
   id: string
-  websiteId: string
+  website_id: string
   userId: string
-  statusCode: number           // 200, 404, 500, etc.
-  responseTime: number         // milliseconds
+  status_code: number         // 200, 404, 500, 0 when no response
+  response_time: number       // milliseconds
   status: "UP" | "DOWN"
-  region: string               // Geographic region
-  createdAt: Date
+  region: string
+  created_at: Date
 }
 ```
 
@@ -310,259 +288,27 @@ interface CheckResult {
 #### **service/timer.ts**
 
 **Responsibilities:**
-- Orchestrate periodic health check polling
-- Manage monitoring intervals for all websites
-- Detect alerts based on uptime thresholds
-- Schedule background jobs (cleanup, alert checks)
+- Run the polling interval for a monitored website (`startMonitoring`)
+- Every 5 minutes, read the website's counters from MongoDB and queue an alert email if
+  uptime < 90% or error rate > 5%
 
-**Architecture:**
-```
-Timer Service
-├─ Initialization (boot)
-│   ├─ Load all active websites from DB
-│   └─ Start polling intervals for each
-│
-├─ Main Polling Loop (every 1 minute per website)
-│   ├─ Call fetch.ts to get HTTP response
-│   ├─ Buffer result to Redis
-│   └─ Continue next iteration
-│
-├─ Alert Detection Loop (every 5 minutes)
-│   ├─ Query checks from DB (last 24h)
-│   ├─ Calculate uptime % per website
-│   ├─ If uptime < 90% OR error rate > 5%:
-│   │   └─ Queue alert email to Redis
-│   └─ Continue loop
-│
-└─ Cleanup Job (daily at midnight)
-    ├─ Delete checks older than 30 days
-    └─ Archive data if needed
-```
-
-**Key Functions:**
-
-```typescript
-// Initialize timer service at boot
-function startTimer(): void {
-  // 1. Load websites from database
-  // 2. For each website, set up polling interval
-  // 3. Start alert check loop (every 5 min)
-  // 4. Start cleanup job (daily)
-}
-
-// Polling function (runs every 1 minute)
-async function pollWebsite(website: Website): Promise<void> {
-  try {
-    const result = await fetch.checkWebsite(website.url)
-    // Buffer to Redis instead of direct DB write
-    await redis.lpush(`checks:buffer`, JSON.stringify(result))
-  } catch (error) {
-    // Log error, retry logic in fetch.ts
-  }
-}
-
-// Alert detection (runs every 5 minutes)
-async function checkAlerts(): Promise<void> {
-  // 1. For each user's websites:
-  const websites = await prisma.website.findMany()
-  for (const website of websites) {
-    // 2. Query last 24h checks
-    const checks = await prisma.checks.findMany({
-      where: { websiteId: website.id, createdAt: { gte: 24h ago } }
-    })
-    
-    // 3. Calculate metrics
-    const uptime = (checks.filter(c => c.status === "UP").length / checks.length) * 100
-    const errorRate = 100 - uptime
-    
-    // 4. Trigger alert if threshold breached
-    if (uptime < 90 || errorRate > 5) {
-      await emailQueue.enqueue({
-        type: "ALERT_EMAIL",
-        userId: website.userId,
-        websiteId: website.id,
-        uptime, errorRate
-      })
-    }
-  }
-}
-
-// Cleanup old data (runs daily)
-async function cleanupOldChecks(): Promise<void> {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  await prisma.checks.deleteMany({
-    where: { createdAt: { lt: thirtyDaysAgo } }
-  })
-}
-```
-
-**State Management:**
-```typescript
-interface TimerState {
-  intervals: Map<string, NodeJS.Timeout>     // Map of websiteId → interval
-  isRunning: boolean
-  lastAlertCheck: Date
-  lastCleanup: Date
-}
-```
-
----
+Old checks are expired by the TTL index on the `checks` collection, so there is no cleanup job.
 
 #### **service/fetch.ts**
 
 **Responsibilities:**
-- Execute HTTP requests to monitored websites
-- Measure response times and collect metadata
-- Handle timeouts and network errors
-- Retry logic with exponential backoff
+- Perform the HTTP GET (5s timeout) and classify the result: 2xx/3xx is UP, anything else is DOWN
+- A timeout or network error is recorded as DOWN with `statusCode` 0
+- Write the check straight to MongoDB with `recordCheck`, which inserts the check and increments the
+  website's counters
 
-**Implementation:**
-
-```typescript
-async function checkWebsite(url: string, region: string = "US_EAST_1"): Promise<CheckResult> {
-  const startTime = Date.now()
-  
-  try {
-    // Use native Bun fetch (or Node fetch)
-    const response = await fetch(url, {
-      method: "GET",
-      timeout: 5000,                          // 5 second timeout
-      headers: { "User-Agent": "Health-Monitor/1.0" },
-      signal: AbortSignal.timeout(5000)
-    })
-    
-    const responseTime = Date.now() - startTime
-    
-    return {
-      statusCode: response.status,
-      responseTime,
-      status: response.ok ? "UP" : "DOWN",    // UP if 200-299, DOWN otherwise
-      region,
-      timestamp: new Date()
-    }
-  } catch (error) {
-    // Timeout or network error
-    const responseTime = Date.now() - startTime
-    return {
-      statusCode: 0,                           // 0 indicates connection failure
-      responseTime,
-      status: "DOWN",
-      region,
-      timestamp: new Date()
-    }
-  }
-}
-
-// Batch check multiple regions (parallel)
-async function checkWebsiteMultiRegion(
-  url: string,
-  regions: string[] = ["US_EAST_1", "US_WEST_1", "EU_CENTRAL_1", "AP_SOUTHEAST_1"]
-): Promise<CheckResult[]> {
-  return Promise.all(
-    regions.map(region => checkWebsite(url, region))
-  )
-}
-```
-
-**Data Structure:**
-```typescript
-interface CheckResult {
-  statusCode: number           // HTTP status or 0 for timeout
-  responseTime: number         // milliseconds
-  status: "UP" | "DOWN"
-  region: string               // Geographic region
-  timestamp: Date
-}
-```
-
-**Timeout & Error Handling:**
-- Request timeout: 5 seconds
-- Status codes 200-299: UP
-- Status codes 4xx, 5xx, or timeout: DOWN
-- No retry at fetch level (handled by timer polling)
-
----
-
-#### **service/flush.ts**
+#### **checker/mongodb/checker.ts**
 
 **Responsibilities:**
-- Batch write buffered health checks from Redis to PostgreSQL
-- Optimize database writes with bulk inserts
-- Handle flush scheduling and frequency
+- `recordCheck`, `getWebsiteStats`, `getUserTotals`, `getChecks`, `getLatestCheck`, `deleteChecks`, `getIncidents`
+- Keeps the `checks` documents and the `websitestats` counters in step
 
-**Architecture:**
-```
-Flush Service
-├─ Initialization
-│   └─ Start flush loop (every 6 seconds)
-│
-├─ Flush Process
-│   ├─ Read buffered checks from Redis queue
-│   ├─ Batch them (max 1000 per flush)
-│   ├─ Bulk insert to PostgreSQL
-│   ├─ Delete from Redis queue on success
-│   └─ Log stats (records flushed, duration)
-│
-└─ Error Handling
-    ├─ If DB insert fails, keep in Redis queue
-    └─ Retry next flush cycle
-```
-
-**Implementation:**
-
-```typescript
-async function startFlushLoop(): Promise<void> {
-  setInterval(async () => {
-    try {
-      await flush()
-    } catch (error) {
-      console.error("Flush error:", error)
-      // Data remains in Redis, will retry
-    }
-  }, 6000)  // Every 6 seconds
-}
-
-async function flush(): Promise<void> {
-  // 1. Retrieve buffered checks from Redis
-  const bufferedChecks = await redis.lrange(
-    "checks:buffer",
-    0,
-    999  // Get up to 1000 records
-  )
-  
-  if (bufferedChecks.length === 0) return
-  
-  // 2. Parse checks
-  const checks = bufferedChecks.map(item => JSON.parse(item))
-  
-  // 3. Bulk insert to PostgreSQL
-  await prisma.checks.createMany({
-    data: checks
-  })
-  
-  // 4. Delete flushed records from Redis
-  await redis.ltrim(
-    "checks:buffer",
-    1000,  // Remove first 1000 elements
-    -1
-  )
-  
-  console.log(`[FLUSH] Persisted ${checks.length} checks to PostgreSQL`)
-}
-```
-
-**Redis Data Structure:**
-```
-Key: "checks:buffer"
-Type: List (FIFO queue)
-Value per item: JSON string of CheckResult
-```
-
-**Optimization Strategy:**
-- Batch size: 1000 checks per flush
-- Flush frequency: Every 6 seconds
-- Trade-off: Low latency (6s) vs. throughput (1000s/min)
-- Uses Prisma batch insert for efficiency
+There is no Redis buffer for checks and no flush worker. A failed Mongo write is logged and that check is lost.
 
 ---
 
@@ -869,7 +615,7 @@ export const redis = {
 
 ```typescript
 // Queue operations
-await redis.lpush("checks:buffer", JSON.stringify(checkResult))
+await redis.lpush("email:queue", JSON.stringify(emailJob))
 const job = await redis.rpop("email:queue")
 
 // Cache operations
@@ -1115,7 +861,7 @@ import { initPrisma } from "./prisma/prisma"
 import { initRedis } from "./service/redis"
 import { initEmail } from "./service/email"
 import { startTimer } from "./service/timer"
-import { startFlushLoop } from "./service/flush"
+import { connectMongo } from "./checker/mongodb/setup"
 import { startEmailWorker } from "./service/emailWorker"
 import { authMiddleware } from "./service/auth/auth"
 import { controllers } from "./controllers"
@@ -1160,7 +906,7 @@ async function start() {
     await initEmail()
     
     startTimer()          // Background polling
-    startFlushLoop()      // Redis → PostgreSQL persistence
+    connectMongo()        // Check history store
     startEmailWorker()    // Email queue processor
     
     app.listen(PORT, () => {
@@ -1202,9 +948,7 @@ User Request (POST /api/v1/websites/add-website)
     ↓
 [Fetch] HTTP GET to website URL (all regions)
     ↓
-[Redis] Buffer check results (checks:buffer queue)
-    ↓ (every 6 seconds)
-[Flush] Bulk insert buffered checks to PostgreSQL
+[Checker] Insert check and update counters in MongoDB
     ↓
 [EmailWorker] Process activation email via Gmail SMTP
 ```
@@ -1214,7 +958,7 @@ User Request (POST /api/v1/websites/add-website)
 ```
 [Timer] Run alert check loop (every 5 minutes)
     ↓
-Query last 24h checks for each website
+Read each website's all-time counters from MongoDB
     ↓
 Calculate uptime % and error rate
     ↓
@@ -1230,18 +974,13 @@ User receives alert notification
 ### Flow 3: Retrieve Check History & Stats
 
 ```
-User Request (GET /api/v1/checks/:websiteId/stats?days=7)
+User Request (GET /api/v1/checks/uptime/:websitename)
     ↓
-[Controller] Extract user ID from JWT
+[Controller] Extract user ID from JWT, look the website up in PostgreSQL
     ↓
-[Prisma] Query checks from PostgreSQL (WHERE createdAt > 7 days ago)
+[Checker] Read the website's counters from MongoDB
     ↓
-Aggregate statistics:
-├─ Count total checks
-├─ Count successful (UP)
-├─ Calculate uptime % = (successful / total) * 100
-├─ Group by region
-└─ Calculate avg response_time
+uptime % = upChecks / totalChecks * 100, avg response = totalResponseTime / totalChecks
     ↓
 Return JSON response with stats
 ```
@@ -1254,7 +993,10 @@ Return JSON response with stats
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/health_monitor
 
-# Redis
+# MongoDB (check history)
+MONGO_URI=mongodb://localhost:27017/watchtower
+
+# Redis (email queue)
 REDIS_URL=redis://localhost:6379
 
 # Email
@@ -1275,10 +1017,10 @@ NODE_ENV=development
 
 | Component | Strategy | Benefit |
 |-----------|----------|---------|
-| **Health Checks** | Buffer in Redis, batch flush every 6s | Reduce DB load, support 1000s checks/min |
+| **Health Checks** | Written straight to MongoDB with atomic counter updates | Keeps writes off PostgreSQL; uptime reads need no scan |
 | **Alert Detection** | Run every 5 min in background | Avoid blocking requests, async processing |
 | **Email Processing** | Queue-based with worker | Decouple email from request handling |
-| **Database Queries** | Index on (websiteId, createdAt), (userId, createdAt) | Fast time-series queries |
+| **Database Queries** | Mongo indexes on (websiteId, createdAt), (userId, createdAt); 30-day TTL | Fast time-series queries, bounded storage |
 | **Concurrent Regions** | Parallel fetch requests | Reduce monitoring latency |
 
 ---
@@ -1288,7 +1030,7 @@ NODE_ENV=development
 | Error Type | Handling |
 |-----------|----------|
 | **HTTP Timeout (5s)** | Mark check as DOWN, record status_code=0 |
-| **DB Connection Failure** | Keep data in Redis queue, retry on next flush |
+| **MongoDB Write Failure** | Logged; that check is dropped (no retry buffer) |
 | **Email Send Failure** | Requeue with exponential backoff (3 retries) |
 | **Invalid JWT** | Return 401 Unauthorized |
 | **Duplicate Website URL** | Return 400 Bad Request |
@@ -1327,7 +1069,7 @@ curl -X POST http://localhost:3000/api/v1/websites/add-website \
   -d '{"name": "Google", "url": "https://google.com"}'
 
 # Get check stats
-curl -X GET "http://localhost:3000/api/v1/checks/<websiteId>/stats?days=7" \
+curl -X GET "http://localhost:3000/api/v1/checks/uptime/<websitename>" \
   -H "Authorization: Bearer <token>"
 ```
 

@@ -6,7 +6,8 @@ import prisma from '../prisma/prisma';
 
 import websiteAuth from '../service/auth/auth';
 import { fetchData } from '../service/fetch';
-import { startMonitoring } from '../service/timer';
+import { deleteChecks } from '../checker/mongodb/checker';
+import { startMonitoring, stopMonitoring } from '../service/timer';
 import { queueEmailJob } from '../service/emailQueue';
 
 declare module 'express-serve-static-core' {
@@ -14,6 +15,10 @@ declare module 'express-serve-static-core' {
         user?: { userId: string; userEmail: string };
     }
 }
+
+// Allowed seconds between checks
+const CHECK_INTERVALS = [30, 60, 300, 600, 1800];
+const DEFAULT_INTERVAL = 60;
 
 const router = express.Router();
 
@@ -23,11 +28,17 @@ const authenticateToken = websiteAuth;
 
 router.post('/add-website', authenticateToken, async (req: Request, res: Response): Promise<void> => {
     const {url,name} = req.body;
+    const checkInterval = req.body.checkInterval === undefined ? DEFAULT_INTERVAL : Number(req.body.checkInterval);
+    if (!CHECK_INTERVALS.includes(checkInterval)) {
+        res.status(400).json({ message: `checkInterval must be one of ${CHECK_INTERVALS.join(', ')} seconds` });
+        return;
+    }
     try {
         const website = await prisma.website.create({
             data:{
                 url,
                 name,
+                checkInterval,
                 userId: req.user!.userId
             }
         })
@@ -39,9 +50,10 @@ router.post('/add-website', authenticateToken, async (req: Request, res: Respons
         const region = 'US_EAST_1'; // You can make this dynamic based on user input or other logic
             startMonitoring(
                     websiteInfo.id,   // already string
+                    req.user!.userId,
                     websiteInfo.url,
                     region,
-                    60000, // every 1 minute (milliseconds)
+                    website.checkInterval * 1000, // per-website interval, stored in seconds
                     req.user!.userEmail, // user email for alerts
                     websiteInfo.name // website name for alerts
                 );
@@ -175,7 +187,7 @@ router.post('/add-website', authenticateToken, async (req: Request, res: Respons
             </html>
           `
         });
-        const resp =   await fetchData(website.id, website.url, 'US_EAST_1');
+        const resp =   await fetchData(website.id, website.userId, website.url, 'US_EAST_1');
 
         res.status(201).json({ message: 'Website added successfully',data:website , result: resp });
     } catch (error) {
@@ -192,6 +204,28 @@ router.get('/websites', authenticateToken, async (req: Request, res: Response): 
             }
         });
         res.json({ websites });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+})
+
+router.patch('/check-interval/:id', authenticateToken, async (req: Request<{id: string}>, res: Response): Promise<void> => {
+    const checkInterval = Number(req.body.checkInterval);
+    if (!CHECK_INTERVALS.includes(checkInterval)) {
+        res.status(400).json({ message: `checkInterval must be one of ${CHECK_INTERVALS.join(', ')} seconds` });
+        return;
+    }
+    try {
+        const existing = await prisma.website.findFirst({ where: { id: req.params.id, userId: req.user!.userId } });
+        if (!existing) {
+            res.status(404).json({ message: 'Website not found' });
+            return;
+        }
+        const website = await prisma.website.update({ where: { id: existing.id }, data: { checkInterval } });
+        // Restart the timers at the new interval
+        stopMonitoring(website.id);
+        startMonitoring(website.id, req.user!.userId, website.url, 'US_EAST_1', checkInterval * 1000, req.user!.userEmail, website.name);
+        res.json({ message: 'Check interval updated', data: website });
     } catch (error) {
         res.status(500).json({ message: 'Internal server error' });
     }
@@ -236,18 +270,22 @@ router.delete('/delete-websites', authenticateToken, async (req: Request, res: R
         const website =  await prisma.website.findFirst({
             where: {
                 name,
+                userId: req.user!.userId,
             }
-            
         });
         if(!website){
             res.status(404).json({ message: 'Website not found' });
             return;
         }
+        const doomed = await prisma.website.findMany({ where: { name: website.name, userId: req.user!.userId }, select: { id: true } });
         await prisma.website.deleteMany({
             where: {
-                name: website?.name || '',
+                name: website.name,
+                userId: req.user!.userId,
             }
         });
+        stopMonitoring(doomed.map((w) => w.id));
+        await deleteChecks(doomed.map((w) => w.id));
         res.json({ message: 'Websites deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Internal server error' });
@@ -259,9 +297,15 @@ router.delete('/delete-website/:id', authenticateToken, async (req: Request<{id:
     const {id} = req.params;
 
     try {
-        await prisma.website.delete({
-            where: { id }
+        const { count } = await prisma.website.deleteMany({
+            where: { id, userId: req.user!.userId }
         });
+        if (count === 0) {
+            res.status(404).json({ message: 'Website not found' });
+            return;
+        }
+        stopMonitoring(id);
+        await deleteChecks(id);
         res.json({ message: 'Website deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Internal server error' });

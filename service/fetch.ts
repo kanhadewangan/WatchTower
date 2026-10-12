@@ -1,8 +1,9 @@
 import axios from "axios";
-import client from "./redis.js";
+import { recordCheck } from "../checker/mongodb/checker.js";
 
-export async function fetchData(websiteId: string, url: string, reigon: string) {
+export async function fetchData(websiteId: string, userId: string, url: string, reigon: string) {
   const start = Date.now();
+  const region = reigon || "US_EAST_1";
 
   try {
     const response = await axios.get(url, {
@@ -10,24 +11,17 @@ export async function fetchData(websiteId: string, url: string, reigon: string) 
       validateStatus: () => true,
     });
 
-    const end = Date.now();
-    const responseTime = end - start;
+    const responseTime = Date.now() - start;
     const isUp = response.status >= 200 && response.status < 400;
 
-    const checkData = {
+    await recordCheck({
       websiteId,
+      userId,
       statusCode: response.status,
       responseTime,
       status: isUp ? "UP" : "DOWN",
-      checkedAt: Date.now(),
-      region: reigon || "US_EAST_1",
-    };
-
-    await client.rPush(
-      "checks:buffer",
-      JSON.stringify(checkData)
-    );
-
+      region,
+    });
 
     return {
       statusCode: response.status,
@@ -38,26 +32,21 @@ export async function fetchData(websiteId: string, url: string, reigon: string) 
     const errMsg = error instanceof Error ? error.message : String(error);
     console.log(`❌ Failed to fetch ${url} from region ${reigon}: ${errMsg}`);
 
-    const checkData = {
+    const responseTime = Date.now() - start;
+    await recordCheck({
       websiteId,
+      userId,
       statusCode: 0,
-      responseTime: Date.now() - start,
+      responseTime,
       status: "DOWN",
-      checkedAt: Date.now(),
-      region: reigon || "US_EAST_1",
-    };
-
-    await client.rPush(
-      "checks:buffer",
-      JSON.stringify(checkData)
-    );
+      region,
+    }).catch((e) => console.error("Failed to record check:", e));
 
     return {
       statusCode: null,
-      responseTime: Date.now() - start,
+      responseTime,
       isSuccess: false,
-      error: error instanceof Error ? error.message : String(error),
-    
+      error: errMsg,
     };
   }
 }

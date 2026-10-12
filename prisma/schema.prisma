@@ -22,7 +22,6 @@ model users{
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   websites Website[] 
-  checks checks[]
 }
 
 
@@ -30,37 +29,15 @@ model Website {
   id        String   @id @default(cuid()) 
   name      String
   url       String
+  // Seconds between checks
+  checkInterval Int @default(60)
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user      users     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  checks    checks[]
 
   @@index([userId])
 }
 
-enum status{
-  UP
-  DOWN
-}
-enum region{
-  US_EAST_1
-  US_WEST_1
-  EU_CENTRAL_1
-  AP_SOUTHEAST_1
-}
-
-model checks{
-  id String @id @default(cuid())
-  website_id String
-  userId String
-  status_code Int
-  response_time Int
-  status status
-  created_at DateTime @default(now())
-  region region
-  website  Website @relation(fields: [website_id], references: [id], onDelete: Cascade)
-  user users @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@index([website_id])
-}
+// Check history lives in MongoDB (see checker/mongodb).

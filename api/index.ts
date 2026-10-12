@@ -4,9 +4,11 @@ import express from 'express';
 import cors from 'cors';
 import website from '../controller/websites.ts';
 import checks from '../controller/checks.ts';
-import { startFlushInterval } from '../service/flush.ts';
 import user from '../controller/users.ts';
 import { processEmails } from '../service/emailWorker.ts';
+import { resumeMonitoring } from '../service/timer.ts';
+import { startFlushWorker } from '../checker/mongodb/checker.ts';
+import { connectMongo } from '../checker/mongodb/setup.ts';
 
 const app = express();
 
@@ -34,8 +36,8 @@ app.get('/', (req, res) => {
 app.get('/api/v1/status', (req, res) => {
   res.json({ status: 'API is running' });
 });
-// Start the flush worker to persist checks to database
-startFlushInterval();
+// Checks are stored in MongoDB
+connectMongo().then(() => { startFlushWorker(); return resumeMonitoring(); }).catch((e) => console.error('Failed to resume monitoring:', e));
 // Start the email worker to process emails
 processEmails();
 
