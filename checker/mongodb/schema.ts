@@ -2,7 +2,16 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const connection = process.env.MONGO_URI || "mongodb://localhost:27017/watchtower";
+// MONGODB_URL may be an Atlas string with <db_username>/<db_password> placeholders; they are
+// filled from MONGODB_USERNAME / MONGODB_PASSWORD so the password isn't pasted into the URL.
+const resolveMongoUrl = () => {
+    const url = process.env.MONGODB_URL || process.env.MONGO_URI;
+    if (!url) return "mongodb://localhost:27017/watchtower";
+    return url
+        .replace("<db_username>", encodeURIComponent(process.env.MONGODB_USERNAME ?? ""))
+        .replace("<db_password>", encodeURIComponent(process.env.MONGODB_PASSWORD ?? ""));
+};
+export const connection = resolveMongoUrl();
 
 export const CHECK_STATUSES = ["UP", "DOWN"] as const;
 export type CheckStatus = (typeof CHECK_STATUSES)[number];
