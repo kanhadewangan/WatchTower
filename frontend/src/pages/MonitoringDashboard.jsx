@@ -371,14 +371,14 @@ const MonitoringDashboard = () => {
         </div>
 
         <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mb-14 transition-opacity ${checksQuery.isPlaceholderData ? "opacity-50" : ""}`}>
-          <div className="bg-[#111118]/60 border border-white/5 p-6 sm:p-8 rounded-[2rem]">
+          <div className="min-w-0 bg-[#111118]/60 border border-white/5 p-6 sm:p-8 rounded-[2rem]">
             <h4 className="text-sm font-bold HeadingFont text-gray-300 mb-1">Response time</h4>
             <p className="text-xs text-gray-500 BodyFont mb-6">Milliseconds per check (lower is better)</p>
             <div className="h-72 w-full">
               {chartData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-sm text-gray-500 BodyFont">No checks in this time range.</div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 520, height: 288 }}>
                   <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
@@ -397,14 +397,14 @@ const MonitoringDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-[#111118]/60 border border-white/5 p-6 sm:p-8 rounded-[2rem]">
+          <div className="min-w-0 bg-[#111118]/60 border border-white/5 p-6 sm:p-8 rounded-[2rem]">
             <h4 className="text-sm font-bold HeadingFont text-gray-300 mb-1">Availability</h4>
             <p className="text-xs text-gray-500 BodyFont mb-6">Share of checks that passed (red = some failed)</p>
             <div className="h-72 w-full">
               {chartData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-sm text-gray-500 BodyFont">No checks in this time range.</div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 520, height: 288 }}>
                   <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
                     <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={48} />

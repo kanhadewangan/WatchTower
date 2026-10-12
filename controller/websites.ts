@@ -27,7 +27,8 @@ const authenticateToken = websiteAuth;
 
 
 router.post('/add-website', authenticateToken, async (req: Request, res: Response): Promise<void> => {
-    const {url,name} = req.body;
+    const url = typeof req.body.url === 'string' ? req.body.url.trim() : req.body.url;
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : req.body.name;
     const checkInterval = req.body.checkInterval === undefined ? DEFAULT_INTERVAL : Number(req.body.checkInterval);
     if (!CHECK_INTERVALS.includes(checkInterval)) {
         res.status(400).json({ message: `checkInterval must be one of ${CHECK_INTERVALS.join(', ')} seconds` });

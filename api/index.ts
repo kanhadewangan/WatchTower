@@ -18,7 +18,7 @@ console.log('Redis_URL:', process.env.REDIS_URL);
 // CORS configuration
 app.use(cors({
   origin: "http://localhost:5173", // Allow requests from this origin
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // Allowed HTTP methods
   allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
   credentials: true // Allow cookies and authentication headers
 }));
