@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+
+const INTERVAL_OPTIONS = [
+  { value: 30, label: "Every 30 seconds" },
+  { value: 60, label: "Every minute" },
+  { value: 300, label: "Every 5 minutes" },
+  { value: 600, label: "Every 10 minutes" },
+  { value: 1800, label: "Every 30 minutes" },
+];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -19,7 +27,7 @@ const Dashboard = () => {
 
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newMonitor, setNewMonitor] = useState({ name: "", url: "" });
+  const [newMonitor, setNewMonitor] = useState({ name: "", url: "", checkInterval: 60 });
   const [addingMonitor, setAddingMonitor] = useState(false);
   const [addError, setAddError] = useState("");
   const [metrics, setMetrics] = useState({
@@ -57,6 +65,7 @@ const Dashboard = () => {
           site.id,
           {
             status: latest?.status || "UNKNOWN",
+            statusCode: latest?.status_code ?? null,
             uptime: uptimeRes?.data?.uptimePercentage ?? null,
             responseTime: uptimeRes?.data?.averageResponseTime ?? null,
             checkedAt: latest?.created_at || null,
@@ -67,6 +76,16 @@ const Dashboard = () => {
     setSiteMetrics(Object.fromEntries(entries));
     setRefreshedAt(new Date());
   };
+
+  // Keep results fresh so stale monitors show up without a manual reload
+  const websitesRef = useRef(websites);
+  websitesRef.current = websites;
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (websitesRef.current.length) fetchSiteMetrics(websitesRef.current);
+    }, 30000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const fetchWebsites = async () => {
@@ -145,7 +164,7 @@ const Dashboard = () => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_URL}/api/v1/websites/add-website`,
-        { name: newMonitor.name, url: newMonitor.url },
+        { name: newMonitor.name, url: newMonitor.url, checkInterval: newMonitor.checkInterval },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -154,7 +173,7 @@ const Dashboard = () => {
       );
       setWebsites((prev) => [...(Array.isArray(prev) ? prev : []), response.data.data]);
       setSiteMetrics((prev) => ({ ...prev, [response.data.data.id]: { status: "UNKNOWN", uptime: null, responseTime: null, checkedAt: null } }));
-      setNewMonitor({ name: "", url: "" });
+      setNewMonitor({ name: "", url: "", checkInterval: 60 });
       setShowAddModal(false);
     } catch (error) {
       console.error("Failed to add monitor:", error);
@@ -168,6 +187,22 @@ const Dashboard = () => {
       setAddError(error.response?.data?.message || "Failed to add monitor. Please try again.");
     } finally {
       setAddingMonitor(false);
+    }
+  };
+
+  const handleIntervalChange = async (website, checkInterval) => {
+    const previous = website.checkInterval;
+    setWebsites((prev) => prev.map((w) => (w.id === website.id ? { ...w, checkInterval } : w)));
+    try {
+      await axios.patch(
+        `${import.meta.env.VITE_URL}/api/v1/websites/check-interval/${website.id}`,
+        { checkInterval },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+    } catch (error) {
+      console.error("Failed to update interval:", error);
+      setWebsites((prev) => prev.map((w) => (w.id === website.id ? { ...w, checkInterval: previous } : w)));
+      alert(error.response?.data?.message || "Failed to update check interval.");
     }
   };
 
@@ -231,9 +266,22 @@ const Dashboard = () => {
   const totalChecks = metrics.totalChecks || metrics.up + metrics.down;
   const uptimePct = totalChecks > 0 ? (metrics.up / totalChecks) * 100 : null;
 
-  const statusOf = (site) => siteMetrics[site.id]?.status || "UNKNOWN";
-  const downSites = websites.filter((w) => statusOf(w) === "DOWN");
-  const allUp = websites.length > 0 && downSites.length === 0 && websites.every((w) => statusOf(w) === "UP");
+  // A monitor is stale when its last check is older than a few of its own intervals (minimum 3 minutes)
+  const staleAfterMs = (site) => Math.max(3 * 60, 3 * (site.checkInterval || 60)) * 1000;
+  const BLOCK_CODES = [401, 403, 429];
+  const statusOf = (site) => {
+    const m = siteMetrics[site.id];
+    if (!m || m.status === "UNKNOWN") return "UNKNOWN";
+    if (Date.now() - new Date(m.checkedAt).getTime() > staleAfterMs(site)) return "STALE";
+    if (m.status === "DOWN" && BLOCK_CODES.includes(m.statusCode)) return "BLOCKED";
+    return m.status;
+  };
+  const sitesIn = (state) => websites.filter((w) => statusOf(w) === state);
+  const downSites = sitesIn("DOWN");
+  const blockedSites = sitesIn("BLOCKED");
+  const staleSites = sitesIn("STALE");
+  const allUp = websites.length > 0 && websites.every((w) => statusOf(w) === "UP");
+  const hasIssues = downSites.length + blockedSites.length + staleSites.length > 0;
 
   const query = search.trim().toLowerCase();
   const filtered = websites.filter(
@@ -252,6 +300,8 @@ const Dashboard = () => {
   const STATUS_STYLE = {
     UP: { label: "Up", dot: "bg-green-500", pill: "text-green-400 bg-green-500/10 border-green-500/20" },
     DOWN: { label: "Down", dot: "bg-red-500", pill: "text-red-400 bg-red-500/10 border-red-500/20" },
+    BLOCKED: { label: "Blocked", dot: "bg-orange-500", pill: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
+    STALE: { label: "Stale", dot: "bg-amber-500", pill: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
     UNKNOWN: { label: "Pending", dot: "bg-gray-500", pill: "text-gray-400 bg-white/5 border-white/10" },
   };
 
@@ -391,26 +441,44 @@ const Dashboard = () => {
               className={`flex items-center gap-5 rounded-2xl border px-6 py-5 ${
                 downSites.length > 0
                   ? "border-red-500/25 bg-red-500/10"
-                  : allUp
-                    ? "border-green-500/20 bg-green-500/[0.07]"
-                    : "border-white/10 bg-white/[0.03]"
+                  : hasIssues
+                    ? "border-amber-500/25 bg-amber-500/10"
+                    : allUp
+                      ? "border-green-500/20 bg-green-500/[0.07]"
+                      : "border-white/10 bg-white/[0.03]"
               }`}
             >
               <span className="relative flex h-3 w-3 shrink-0">
                 {downSites.length > 0 && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60" />}
-                <span className={`relative inline-flex h-3 w-3 rounded-full ${downSites.length > 0 ? "bg-red-500" : allUp ? "bg-green-500" : "bg-gray-500"}`} />
+                <span className={`relative inline-flex h-3 w-3 rounded-full ${downSites.length > 0 ? "bg-red-500" : hasIssues ? "bg-amber-500" : allUp ? "bg-green-500" : "bg-gray-500"}`} />
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-semibold HeadingFont">
                   {downSites.length > 0
                     ? `${downSites.length} ${downSites.length === 1 ? "site is" : "sites are"} down`
+                    : hasIssues
+                      ? "Some monitors need attention"
+                      : allUp
+                        ? "All sites are up"
+                        : "Waiting for the first checks"}
+                </p>
+                <p className="text-sm text-gray-400 BodyFont">
+                  {hasIssues
+                    ? [
+                        downSites.length > 0 && `Down: ${downSites.map((s) => s.name).join(", ")}`,
+                        blockedSites.length > 0 && `Blocked (site refuses monitor requests): ${blockedSites.map((s) => s.name).join(", ")}`,
+                        staleSites.length > 0 && `Not checked recently: ${staleSites.map((s) => s.name).join(", ")}`,
+                      ].filter(Boolean).join(" · ")
                     : allUp
-                      ? "All sites are up"
-                      : "Waiting for the first checks"}
+                      ? "Every monitor passed its latest check."
+                      : "Results show up here once checks have run."}
                 </p>
-                <p className="text-sm text-gray-400 BodyFont truncate">
-                  {downSites.length > 0 ? downSites.map((s) => s.name).join(", ") : allUp ? "Every monitor passed its latest check." : "Results show up here once checks have run."}
-                </p>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 text-xs font-semibold HeadingFont shrink-0">
+                <span className="px-2.5 py-1 rounded-full border text-green-400 bg-green-500/10 border-green-500/20">{sitesIn("UP").length} up</span>
+                {downSites.length > 0 && <span className="px-2.5 py-1 rounded-full border text-red-400 bg-red-500/10 border-red-500/20">{downSites.length} down</span>}
+                {blockedSites.length > 0 && <span className="px-2.5 py-1 rounded-full border text-orange-400 bg-orange-500/10 border-orange-500/20">{blockedSites.length} blocked</span>}
+                {staleSites.length > 0 && <span className="px-2.5 py-1 rounded-full border text-amber-400 bg-amber-500/10 border-amber-500/20">{staleSites.length} stale</span>}
               </div>
             </motion.div>
           )}
@@ -500,6 +568,15 @@ const Dashboard = () => {
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold HeadingFont truncate group-hover:text-amber-500 transition-colors">{website.name}</p>
                           <p className="text-xs text-gray-500 font-mono truncate">{website.url}</p>
+                          {statusOf(website) === "BLOCKED" && (
+                            <p className="text-xs text-orange-400/90 BodyFont mt-1">Returned {m.statusCode}. The site is likely blocking monitoring requests, not down.</p>
+                          )}
+                          {statusOf(website) === "DOWN" && m?.statusCode != null && (
+                            <p className="text-xs text-red-400/90 BodyFont mt-1">{m.statusCode === 0 ? "No response from the site" : `Returned HTTP ${m.statusCode}`}</p>
+                          )}
+                          {statusOf(website) === "STALE" && (
+                            <p className="text-xs text-amber-400/90 BodyFont mt-1">No check in {timeAgo(m.checkedAt).replace(" ago", "")}. Monitoring may have stopped.</p>
+                          )}
                         </div>
 
                         <div className="hidden md:block w-24 text-right">
@@ -510,6 +587,18 @@ const Dashboard = () => {
                           <p className="text-sm font-semibold HeadingFont">{m?.responseTime != null && m.checkedAt ? `${Math.round(m.responseTime)} ms` : "—"}</p>
                           <p className="text-[11px] text-gray-500 BodyFont">avg response</p>
                         </div>
+                        <select
+                          value={website.checkInterval || 60}
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          onChange={(e) => handleIntervalChange(website, Number(e.target.value))}
+                          aria-label={`Check interval for ${website.name}`}
+                          className="hidden xl:block bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-amber-500/50 BodyFont"
+                        >
+                          {INTERVAL_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value} className="bg-[#111118]">{o.label}</option>
+                          ))}
+                        </select>
                         <div className="hidden lg:block w-28 text-right">
                           <p className="text-sm text-gray-300 BodyFont">{timeAgo(m?.checkedAt)}</p>
                           <p className="text-[11px] text-gray-500 BodyFont">last check</p>
@@ -605,6 +694,20 @@ const Dashboard = () => {
                     className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all BodyFont"
                     placeholder="https://example.com"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="monitorInterval" className="text-sm font-medium text-gray-300 BodyFont">Check frequency</label>
+                  <select
+                    id="monitorInterval"
+                    value={newMonitor.checkInterval}
+                    onChange={(e) => setNewMonitor((prev) => ({ ...prev, checkInterval: Number(e.target.value) }))}
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/50 transition-all BodyFont"
+                  >
+                    {INTERVAL_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value} className="bg-[#111118]">{o.label}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="flex gap-3 pt-2">

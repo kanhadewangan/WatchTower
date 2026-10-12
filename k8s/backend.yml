@@ -21,8 +21,10 @@ spec:
           env:
             - name: DATABASE_URL
               value: "postgresql://testuser:testpassword@db:5432/testdb"
-            - name: redis_url
+            - name: REDIS_URL
               value: "redis://cache:6379"
+            - name: MONGO_URI
+              value: mongodb://mongo.backend.svc.cluster.local:27017/watchtower
           ports:
             - containerPort: 3000
 ---
@@ -40,3 +42,59 @@ spec:
         port: 3000
         targetPort: 3000
     type: LoadBalancer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-data
+  namespace: backend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  namespace: backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mongo-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: backend
+spec:
+  selector:
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+  type: ClusterIP

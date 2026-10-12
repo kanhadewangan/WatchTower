@@ -1,46 +1,58 @@
 import { fetchData } from "./fetch";
 import { queueEmailJob } from "./emailQueue.js";
-import prisma from '../prisma/prisma.js';
+import prisma from '../prisma/prisma';
+import { getWebsiteStats } from '../checker/mongodb/checker.js';
 import dotenv from 'dotenv'
-import client from './redis.js';
-import { flushLogsToDB } from "./flush.js";
 dotenv.config({
   path:'.env'
 })
 
 
-export function startMonitoring(websiteId: string, url: string, reigon: string, interval: number, userEmail: string, websiteName: string): void {
-  fetchData(websiteId, url, reigon); // run once
+const monitors = new Map<string, { check: ReturnType<typeof setInterval>; alerts: ReturnType<typeof setInterval> }>();
 
-  setInterval(() => {
-    fetchData(websiteId, url, reigon).catch(console.error);
+// One timer pair per website: calling this again for a running website is a no-op.
+export function startMonitoring(websiteId: string, userId: string, url: string, reigon: string, interval: number, userEmail: string, websiteName: string): void {
+  if (monitors.has(websiteId)) return;
+
+  fetchData(websiteId, userId, url, reigon).catch(console.error); // run once
+
+  const check = setInterval(() => {
+    fetchData(websiteId, userId, url, reigon).catch(console.error);
   }, interval);
-  
+
   // Check alerts every 5 minutes
-  setInterval(async () => {
+  const alerts = setInterval(async () => {
     await checkAndSendAlerts(websiteId, userEmail, websiteName);
   }, 5 * 60 * 1000);
-  // Remove old logs daily
-  setInterval(async () => {
-    await RemoveoldLogs();
-  }, 24 * 60 * 60 * 1000);
+  // Old checks are expired by the TTL index on the Mongo checks collection
+
+  monitors.set(websiteId, { check, alerts });
+}
+
+export function stopMonitoring(websiteIds: string | string[]): void {
+  for (const id of Array.isArray(websiteIds) ? websiteIds : [websiteIds]) {
+    const m = monitors.get(id);
+    if (!m) continue;
+    clearInterval(m.check);
+    clearInterval(m.alerts);
+    monitors.delete(id);
+  }
+}
+
+// Timers live in memory, so a restart drops them. Restart monitoring for every stored website.
+export async function resumeMonitoring(): Promise<void> {
+  const websites = await prisma.website.findMany({ include: { user: { select: { email: true } } } });
+  for (const w of websites) {
+    startMonitoring(w.id, w.userId, w.url, "US_EAST_1", w.checkInterval * 1000, w.user.email, w.name);
+  }
+  console.log(`Resumed monitoring for ${websites.length} website(s)`);
 }
 
 async function checkAndSendAlerts(websiteId: string, userEmail: string, websiteName: string): Promise<void> {
   try {
-    const totalChecks = await prisma.checks.count({
-      where: { website_id: websiteId }
-    });
-    
-    const upChecks = await prisma.checks.count({
-      where: { website_id: websiteId, status: "UP" }
-    });
-    
+    const { totalChecks, errorMetric, uptimePercentage } = await getWebsiteStats(websiteId);
     if (totalChecks === 0) return;
-    
-    const errorMetric = ((totalChecks - upChecks) / totalChecks) * 100;
-    const uptimePercentage = (upChecks / totalChecks) * 100;
-    
+
     const uptimeThreshold = 90;
     const hasHighErrorRate = errorMetric > 5;
     const hasLowUptime = uptimePercentage < uptimeThreshold;
@@ -210,25 +222,4 @@ async function checkAndSendAlerts(websiteId: string, userEmail: string, websiteN
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error(`❌ Alert check failed for ${websiteName}:`, errMsg);
   }
-}
-
-
-async function RemoveoldLogs() {  
-  const THIRTY_DAYS_AGO = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
-  await prisma.checks.deleteMany({
-    where: {
-      created_at: { lt: THIRTY_DAYS_AGO }
-    }
-  });
-}
-
-
-// Pop up to `count` checks from the Redis buffer in a single round trip
-export async function fetchAllChecks(count = 1000) {
-  const items = await client.lPopCount("checks:buffer", count);
-  return (items ?? []).map((item) => JSON.parse(item));
-}
-
-if (process.env.NODE_ENV !== "test") {
-  console.log("🧹 Timer-based flush interval disabled (handled by flush.ts)");
 }
