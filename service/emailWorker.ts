@@ -31,3 +31,28 @@ console.log("📨 Email worker started");
   }
 }
 
+
+
+// Serverless: send everything currently queued, then return (no endless loop).
+export async function drainEmails() {
+  let sent = 0;
+  while (true) {
+    const job = await client.lPop("email:queue");
+    if (!job) break;
+    try {
+      const email = JSON.parse(job);
+      await transporter.sendMail({
+        to: email.to,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+        inReplyTo: email.inReplyTo,
+        references: email.references,
+      });
+      sent++;
+    } catch (err: unknown) {
+      console.error("❌ Email failed:", err instanceof Error ? err.message : String(err));
+    }
+  }
+  return sent;
+}

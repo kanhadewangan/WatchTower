@@ -5,8 +5,8 @@ import cors from 'cors';
 import website from '../controller/websites.ts';
 import checks from '../controller/checks.ts';
 import user from '../controller/users.ts';
-import { processEmails } from '../service/emailWorker.ts';
-import { resumeMonitoring } from '../service/timer.ts';
+import { processEmails, drainEmails } from '../service/emailWorker.ts';
+import { resumeMonitoring, runDueChecks, IS_SERVERLESS } from '../service/timer.ts';
 import { startFlushWorker } from '../checker/mongodb/checker.ts';
 import { connectMongo } from '../checker/mongodb/setup.ts';
 
@@ -14,10 +14,11 @@ const app = express();
 
 console.log('Environment Variables:');
 console.log('DATABASE_URL:', process.env.DATABASE_URL);
+console.log('MONGODB_URL:', process.env.MONGODB_URL);
 console.log('Redis_URL:', process.env.REDIS_URL);
 // CORS configuration
 app.use(cors({
-  origin: "http://localhost:5173", // Allow requests from this origin
+  origin: (process.env.FRONTEND_URL || "http://localhost:5173").split(","), // Allowed frontend origin(s), comma separated
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // Allowed HTTP methods
   allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
   credentials: true // Allow cookies and authentication headers
@@ -36,12 +37,34 @@ app.get('/', (req, res) => {
 app.get('/api/v1/status', (req, res) => {
   res.json({ status: 'API is running' });
 });
-// Checks are stored in MongoDB
-connectMongo().then(() => { startFlushWorker(); return resumeMonitoring(); }).catch((e) => console.error('Failed to resume monitoring:', e));
-// Start the email worker to process emails
-processEmails();
+// Vercel Cron calls this every minute (sends `Authorization: Bearer $CRON_SECRET`)
+app.get('/api/cron', async (req, res) => {
+  if (!process.env.CRON_SECRET || req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    await mongoReady;
+    const result = await runDueChecks();
+    const emails = await drainEmails();
+    res.json({ ...result, emails });
+  } catch (e) {
+    console.error('Cron run failed:', e);
+    res.status(500).json({ error: 'Cron run failed' });
+  }
+});
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`Server is running on port ${process.env.PORT || 3000}`);
-})
+// Checks are stored in MongoDB
+const mongoReady = connectMongo();
+
+if (!IS_SERVERLESS) {
+  // Long-running server: in-memory timers, flush worker and email worker
+  mongoReady.then(() => { startFlushWorker(); return resumeMonitoring(); }).catch((e) => console.error('Failed to resume monitoring:', e));
+  processEmails();
+
+  app.listen(process.env.PORT || 3000, () => {
+    console.log(`Server is running on port ${process.env.PORT || 3000}`);
+  })
+}
+
+export default app;
 

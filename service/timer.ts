@@ -1,7 +1,8 @@
 import { fetchData } from "./fetch";
 import { queueEmailJob } from "./emailQueue.js";
 import prisma from '../prisma/prisma';
-import { getWebsiteStats } from '../checker/mongodb/checker.js';
+import { getWebsiteStats, getLatestCheck, flushChecks } from '../checker/mongodb/checker.js';
+import redis from './redis.js';
 import dotenv from 'dotenv'
 dotenv.config({
   path:'.env'
@@ -11,7 +12,11 @@ dotenv.config({
 const monitors = new Map<string, { check: ReturnType<typeof setInterval>; alerts: ReturnType<typeof setInterval> }>();
 
 // One timer pair per website: calling this again for a running website is a no-op.
+// On Vercel there are no long-lived timers: a cron hits /api/cron, which calls runDueChecks().
+export const IS_SERVERLESS = !!process.env.VERCEL;
+
 export function startMonitoring(websiteId: string, userId: string, url: string, reigon: string, interval: number, userEmail: string, websiteName: string): void {
+  if (IS_SERVERLESS) return; // the cron picks the website up on its next run
   if (monitors.has(websiteId)) return;
 
   fetchData(websiteId, userId, url, reigon).catch(console.error); // run once
@@ -46,6 +51,27 @@ export async function resumeMonitoring(): Promise<void> {
     startMonitoring(w.id, w.userId, w.url, "US_EAST_1", w.checkInterval * 1000, w.user.email, w.name);
   }
   console.log(`Resumed monitoring for ${websites.length} website(s)`);
+}
+
+// One cron tick: check every website whose interval has elapsed, then run its alert check
+// (at most once per 5 minutes per website, tracked in Redis).
+export async function runDueChecks(): Promise<{ checked: number; total: number }> {
+  const websites = await prisma.website.findMany({ include: { user: { select: { email: true } } } });
+  const now = Date.now();
+  const due: typeof websites = [];
+  for (const w of websites) {
+    const last = await getLatestCheck(w.id);
+    // 5s grace so a cron tick landing just before the interval boundary still counts
+    if (!last || now - new Date(last.created_at).getTime() >= w.checkInterval * 1000 - 5000) due.push(w);
+  }
+  await Promise.all(due.map((w) => fetchData(w.id, w.userId, w.url, "US_EAST_1").catch(console.error)));
+  await flushChecks();
+
+  for (const w of websites) {
+    const first = await redis.set(`alert:${w.id}`, "1", { NX: true, EX: 300 });
+    if (first) await checkAndSendAlerts(w.id, w.user.email, w.name);
+  }
+  return { checked: due.length, total: websites.length };
 }
 
 async function checkAndSendAlerts(websiteId: string, userEmail: string, websiteName: string): Promise<void> {
